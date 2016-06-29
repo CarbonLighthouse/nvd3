@@ -6,9 +6,12 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 50, left: 60},
+        margin2 = {top: 0, right: 20, bottom: 20, left: 60},    //NOTE
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
+        focusHeight = 50,
+        // height2 = null, //NOTE
         showLegend = true,
         noData = null,
         yDomain1,
@@ -27,11 +30,14 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var x = d3.scale.linear(),
+        x2 = d3.scale.linear(), //NOTE may have to add .range()
+        y2 = d3.scale.linear(), //NOTE this may not be used since we have yscale
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
 
         lines1 = nv.models.line().yScale(yScale1),
         lines2 = nv.models.line().yScale(yScale2),
+        //NOTE may have to make a focusLines object to use (see area2)
 
         scatters1 = nv.models.scatter().yScale(yScale1),
         scatters2 = nv.models.scatter().yScale(yScale2),
@@ -43,12 +49,14 @@ nv.models.multiChart = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom'),   //NOTE
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch();
+        dispatch = d3.dispatch()
+        ;
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
@@ -58,11 +66,33 @@ nv.models.multiChart = function() {
                 that = this;
             nv.utils.initSVG(container);
 
+        //NOTE function brushed() needs to be in scope of this
+        var brush = d3.svg.brush()
+                    .x(x2)
+                    .on("brush", brushed);
+
+        //NOTE
+        function brushed() {
+            x.domain(brush.empty() ? x2.domain() : brush.extent());
+            focus.select(".line").attr("d", lines1);
+            focus.select(".x.axis").call(xAxis);
+        }
+
+        //NOTE
+        function type(d) {
+            d.date = parseDate(d.date);
+            d.price = +d.price;
+            return d;
+        }
+
+
+
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
-                availableHeight = nv.utils.availableHeight(height, container, margin);
+                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
+                availableHeight2 = focusHeight - margin2.top - margin2.bottom;
 
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
@@ -98,6 +128,8 @@ nv.models.multiChart = function() {
             x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
+            x2  .domain(x.domain());    //NOTE
+
             var wrap = container.selectAll('g.wrap.multiChart').data([data]);
             var gEnter = wrap.enter().append('g').attr('class', 'wrap nvd3 multiChart').append('g');
 
@@ -114,6 +146,62 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'lines2Wrap');
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
+
+
+            //NOTE we'll likely have to rethink the size, this is just for testing
+            var svg = d3.select('body').append('svg')
+                        .attr('width', availableWidth)
+                        .attr('height', availableHeight);
+
+            //NOTE
+            svg.append('defs').append('clipPath')
+                .attr('id', 'clip')
+                .append('rect')
+                .attr('width', availableWidth)   //NOTE will be available width/height
+                .attr('height', availableHeight);
+
+            //NOTE
+            var focus = svg.append('g')
+                            .attr('class', 'focus')
+                            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+                           ;
+
+            //NOTE
+            var context = svg.append('g')
+                            .attr('class', 'context')
+                            .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')');
+
+
+            // focus.datum(data)   //NOTE this had focus.append('path')
+            //     .attr('class', 'line')
+            //     .attr('d', 'line');
+
+            focus.append('g')
+                .attr('class', 'x axis')
+                .attr('transform', 'translate(0,' + availableHeight2 + ')')
+                .call(xAxis);
+
+            focus.append("g")
+              .attr("class", "y axis")
+              .call(yAxis1);
+
+            // context.datum(data) //NOTE this had context.append('path')
+            //   .attr("class", "line")
+            //   .attr("d", lines1);
+
+            context.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + availableHeight2 + ")")
+              .call(xAxis2);
+
+            context.append("g")
+              .attr("class", "x brush")
+              .call(brush)
+              .selectAll("rect")
+              .attr("y", -6)
+              .attr("height", availableHeight2 + 7);
+
+
 
             var g = wrap.select('g');
 
@@ -212,6 +300,7 @@ nv.models.multiChart = function() {
             yScale2 .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
+
             lines1.yDomain(yScale1.domain());
             scatters1.yDomain(yScale1.domain());
             bars1.yDomain(yScale1.domain());
@@ -221,6 +310,8 @@ nv.models.multiChart = function() {
             scatters2.yDomain(yScale2.domain());
             bars2.yDomain(yScale2.domain());
             stack2.yDomain(yScale2.domain());
+
+            y2.domain(yScale1.domain()); //NOTE
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
