@@ -36,7 +36,6 @@
             values: data.map(function(a){a.y = a.y * (i <= 1 ? -1 : 1); return a})
         };
     });
-
     testdata[0].type = "area";
     testdata[0].yAxis = 1;
     testdata[1].type = "area";
@@ -55,6 +54,8 @@
     testdata[7].yAxis = 2;
     testdata[8].type = "bar";
     testdata[8].yAxis = 2;
+
+
 
     nv.addGraph(function() {
         var chart = nv.models.multiChart()
