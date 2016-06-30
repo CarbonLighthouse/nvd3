@@ -9022,7 +9022,7 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 50, left: 60},
-        margin2 = {top: 0, right: 20, bottom: 20, left: 68},    //NOTE
+        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //NOTE
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -9078,7 +9078,6 @@ nv.models.multiChart = function() {
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
     function chart(selection) {
-        console.dir(selection)
         selection.each(function(data) {
             var container = d3.select(this),
                 that = this;
@@ -9086,7 +9085,7 @@ nv.models.multiChart = function() {
 
 
 
-            //NOTE function brushed() needs to be in scope of this
+            //NOTE
             var brush = d3.svg.brush()
                         .x(x2)
                         .on("brush", brushed);
@@ -9130,7 +9129,7 @@ nv.models.multiChart = function() {
             // NOTE
             function brushed() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
-                focus.select(".line").attr("d", lines1);
+                focus.select(".line").attr("d", line);
                 focus.select(".x.axis").call(xAxis);
 
                 //NOTE lineChart's update x and update y functions
@@ -9145,7 +9144,6 @@ nv.models.multiChart = function() {
                 //   .duration(0)
                 //   .call(yAxis1)
                 // ;
-                // chart.update();  //NOTE this keeps appending empty charts, but the y1 and x axes is correct!
             }
 
             // function onBrush() {
@@ -9292,35 +9290,38 @@ nv.models.multiChart = function() {
                             .attr('class', 'context')
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')');
 
+            //NOTE too inefficient, this slows down fast
             var line = function (d) {
-                // console.dir(d)
                 d.forEach(function(i) {
-                    console.dir(i)
-                    // console.dir(getX(i.values))
-                    d3.svg.line()
-                        .x(function(i) { return i.values.x; })
-                        .y(function(i) { return i.values.y; })
-                        .interpolate('monotone')
-                    ;
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
                 });
             };
 
+            //NOTE too inefficient, this slows down fast
             var line2 = function(d) {
-                console.dir(d)
-                console.dir(data)
-                console.dir(series1)
-
-                d3.svg.line()
-                    .x(function(d) { return d.x; })
-                    .y(function(d) { return d.y; })
-                    .interpolate('monotone')
-                ;
+               d.forEach(function(i) {
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
+                });
             };
 
             //NOTE
             focus.append('path') 
-                .datum(data)   
-                .attr('class', 'lines')     //NOTE should this be 'line'?
+                .datum(series1)   
+                .attr('class', 'line')     //NOTE should this be 'line'?
                 .attr('d', line);    //NOTE probably going to transition to resizePath
             
             focus.append('g')
@@ -9333,8 +9334,8 @@ nv.models.multiChart = function() {
                 .call(y2);
 
             context.append('path')
-                .datum(data) 
-                .attr('class', 'lines')     //NOTE should this be 'line'?
+                .datum(series2) 
+                .attr('class', 'line')     //NOTE should this be 'line'?
                 .attr('d', line2);    //NOTE probably going to transition to resizePath
 
             context.append('g')

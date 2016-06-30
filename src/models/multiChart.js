@@ -6,7 +6,7 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 50, left: 60},
-        margin2 = {top: 0, right: 20, bottom: 20, left: 68},    //NOTE
+        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //NOTE
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -69,7 +69,7 @@ nv.models.multiChart = function() {
 
 
 
-            //NOTE function brushed() needs to be in scope of this
+            //NOTE
             var brush = d3.svg.brush()
                         .x(x2)
                         .on("brush", brushed);
@@ -113,7 +113,7 @@ nv.models.multiChart = function() {
             // NOTE
             function brushed() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
-                focus.select(".line").attr("d", lines1);
+                focus.select(".line").attr("d", line);
                 focus.select(".x.axis").call(xAxis);
 
                 //NOTE lineChart's update x and update y functions
@@ -128,7 +128,6 @@ nv.models.multiChart = function() {
                 //   .duration(0)
                 //   .call(yAxis1)
                 // ;
-                // chart.update();  //NOTE this keeps appending empty charts, but the y1 and x axes is correct!
             }
 
             // function onBrush() {
@@ -185,10 +184,6 @@ nv.models.multiChart = function() {
             //                 .attr('width', rightWidth < 0 ? 0 : rightWidth);
             //         });
             // }
-
-
-
-
 
 
 
@@ -256,81 +251,88 @@ nv.models.multiChart = function() {
 
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body').append('svg')
-                        .attr('width', availableWidth)
-                        .attr('height', availableHeight);
+            var svg = d3.select('body').append('svg');
+                        // .attr('width', availableWidth)
+                        // .attr('height', availableHeight2);
 
             //NOTE
             svg.append('defs').append('clipPath')
                 .attr('id', 'clip')
                 .append('rect')
                 .attr('width', availableWidth)  
-                .attr('height', availableHeight);
+                .attr('height', availableHeight2)
+                ;
 
             //NOTE
             var focus = svg.append('g')
                             .attr('class', 'focus')
                             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-                           ;
+                        ;
 
             //NOTE
             var context = svg.append('g')
                             .attr('class', 'context')
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')');
 
-
-
+            //NOTE too inefficient, this slows down fast
             var line = function (d) {
-                // console.dir(d[0][0].x)
-                // console.dir(lines1.x())
-                d3.svg.line()
-                    .x(lines1.x())
-                    .y(yScale1)
-                    .interpolate('linear')
-                    ;
+                d.forEach(function(i) {
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
+                });
             };
 
+            //NOTE too inefficient, this slows down fast
             var line2 = function(d) {
-                d3.svg.line()
-                    .x(lines2.x())
-                    .y(lines2.y())
-                    .interpolate('linear')
-                    ;
+               d.forEach(function(i) {
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
+                });
             };
 
             //NOTE
             focus.append('path') 
-                .datum(data)   
-                .attr('class', 'lines')     //NOTE should this be 'line'?
-                .attr('d', line(series1))    //NOTE probably going to transition to resizePath
-            ;
-
+                .datum(series1)   
+                .attr('class', 'line')     //NOTE should this be 'line'?
+                .attr('d', line);    //NOTE probably going to transition to resizePath
+            
             focus.append('g')
                 .attr('class', 'x axis')
                 .attr('transform', 'translate(0,' + availableHeight2 + ')')
                 .call(xAxis);
 
-            focus.append("g")
-                .attr("class", "y axis")
+            focus.append('g')
+                .attr('class', 'y axis')
                 .call(y2);
 
             context.append('path')
-                .datum(data) 
-                .attr("class", "lines")     //NOTE should this be 'line'?
-                .attr("d", line2(series2));    //NOTE probably going to transition to resizePath
+                .datum(series2) 
+                .attr('class', 'line')     //NOTE should this be 'line'?
+                .attr('d', line2);    //NOTE probably going to transition to resizePath
 
-            context.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate(0," + availableHeight2 + ")")
+            context.append('g')
+              .attr('class', 'x axis')
+              .attr('transform', 'translate(0,' + availableHeight2 + ')')
               .call(xAxis2);
 
-            context.append("g")
-              .attr("class", "x brush")
+            context.append('g')
+              .attr('class', 'x brush')
               .call(brush)
-            .selectAll("rect")
-              .attr("y", -6)
-              .attr("height", availableHeight2 + 7);
-
+            .selectAll('rect')
+              .attr('y', -6)
+              .attr('height', availableHeight2 + 7);
 
 
 
