@@ -6737,6 +6737,7 @@ nv.models.lineWithFocusChart = function() {
     .margin({ bottom: 30 }) 
     .focusEnable( true );
 };
+
 nv.models.linePlusBarChart = function() {
     "use strict";
 
@@ -9039,7 +9040,8 @@ nv.models.multiChart = function() {
         interactiveLayer = nv.interactiveGuideline(),
         useInteractiveGuideline = false,
         legendRightAxisHint = ' (right axis)',
-        brushExtent = null
+        brushExtent = null,
+        duration = 250
         ;
 
     //============================================================
@@ -9048,12 +9050,16 @@ nv.models.multiChart = function() {
 
     var x = d3.scale.linear(),
         x2 = d3.scale.linear(), //NOTE may have to add .range()
+        y = d3.scale.linear(),
         y2 = d3.scale.linear(), //NOTE this may not be used since we have yscale
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
 
         lines1 = nv.models.line().yScale(yScale1),
         lines2 = nv.models.line().yScale(yScale2),
+
+        // x = lines1.xScale(),
+        // x2 = lines1.xScale(), //NOTE may have to add .range()
         //NOTE may have to make a focusLines object to use (see area2)
 
         scatters1 = nv.models.scatter().yScale(yScale1),
@@ -9072,10 +9078,28 @@ nv.models.multiChart = function() {
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch('brush')
+        dispatch = d3.dispatch('brush', 'stateChange', 'changeState', 'renderEnd'),
+        state = nv.utils.state()
         ;
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
+
+    var stateGetter = function(data) {
+        return function(){
+            return {
+                active: data.map(function(d) { return !d.disabled; })
+            };
+        };
+    };
+
+    var stateSetter = function(data) {
+        return function(state) {
+            if (state.active !== undefined)
+                data.forEach(function(series,i) {
+                    series.disabled = !state.active[i];
+                });
+        };
+    };
 
     function chart(selection) {
         selection.each(function(data) {
@@ -9087,129 +9111,92 @@ nv.models.multiChart = function() {
 
             //NOTE
             var brush = d3.svg.brush()
-                        .x(x2)
-                        .on("brush", brushed);
+                .x(x2)
+                .on("brush", onBrush);
 
             if (brushExtent) brush.extent(brushExtent);
-
-                // var brushBG = g.select('.nv-background').selectAll('g')
-                //     .data([brushExtent || brush.extent()]);
-        
-                // var brushBGenter = brushBG.enter()
-                //     .append('g');
-    
-                // brushBGenter.append('rect')
-                //     .attr('class', 'left')
-                //     .attr('x', 0)
-                //     .attr('y', 0)
-                //     .attr('height', availableHeight2);
-    
-                // brushBGenter.append('rect')
-                //     .attr('class', 'right')
-                //     .attr('x', 0)
-                //     .attr('y', 0)
-                //     .attr('height', availableHeight2);
-    
-                // var gBrush = g.select('.nv-x.nv-brush')
-                //     .call(brush);
-                // gBrush.selectAll('rect')
-                //     .attr('height', availableHeight2);
-                // gBrush.selectAll('.resize').append('path').attr('d', resizePath);
-    
-                // onBrush();
-    
-                // g.select('.nv-context .nv-background rect')
-                //     .attr('width', availableWidth)
-                //     .attr('height', availableHeight2);
-
-
-
-
 
             // NOTE
             function brushed() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
                 focus.select(".line").attr("d", line);
-                focus.select(".x.axis").call(xAxis);
-
-                //NOTE lineChart's update x and update y functions
-                // g.select('.nv-focus .nv-x.nv-axis')
-                //   .transition()
-                //   .duration(0)
-                //   .call(xAxis)
-                // ;
-
-                // g.select('.nv-focus .nv-y.nv-axis')
-                //   .transition()
-                //   .duration(0)
-                //   .call(yAxis1)
-                // ;
+                focus.select(".nv-x.nv-axis").call(xAxis);
             }
 
-            // function onBrush() {
-            //     brushExtent = brush.empty() ? null : brush.extent();
-            //     var extent = brush.empty() ? x2.domain() : brush.extent();
-    
-            //     //The brush extent cannot be less than one.  If it is, don't update the line chart.
-            //     if (Math.abs(extent[0] - extent[1]) <= 1) {
-            //         return;
-            //     }
-    
-            //     dispatch.brush({extent: extent, brush: brush});
-    
-    
-            //     updateBrushBG();
-    
-            //     // Update Main (Focus)
-            //     var focusLinesWrap = g.select('.nv-focus .nv-linesWrap')
-            //         .datum(
-            //         data
-            //             .filter(function(d) { return !d.disabled; })
-            //             .map(function(d,i) {
-            //                 return {
-            //                     key: d.key,
-            //                     area: d.area,
-            //                     classed: d.classed,
-            //                     values: d.values.filter(function(d,i) {
-            //                         return lines.x()(d,i) >= extent[0] && lines.x()(d,i) <= extent[1];
-            //                     }),
-            //                     disableTooltip: d.disableTooltip
-            //                 };
-            //             })
-            //     );
-            //     focusLinesWrap.transition().duration(duration).call(lines);
-    
-    
-            //     // Update Main (Focus) Axes
-            //     updateXAxis();
-            //     updateYAxis();
-            // }
+            function onBrush() {
+                x.domain(brush.empty() ? x2.domain() : brush.extent());
+                focus.select(".line").attr("d", line);
+                focus.select(".nv-x.nv-axis").call(xAxis);
 
-            // function updateBrushBG() {
-            //     if (!brush.empty()) brush.extent(brushExtent);
-            //     brushBG
-            //         .data([brush.empty() ? x2.domain() : brushExtent])
-            //         .each(function(d,i) {
-            //             var leftWidth = x2(d[0]) - x.range()[0],
-            //                 rightWidth = availableWidth - x2(d[1]);
-            //             d3.select(this).select('.left')
-            //                 .attr('width',  leftWidth < 0 ? 0 : leftWidth);
+
+                brushExtent = brush.empty() ? null : brush.extent();
+                var extent = brush.empty() ? x2.domain() : brush.extent();
     
-            //             d3.select(this).select('.right')
-            //                 .attr('x', x2(d[1]))
-            //                 .attr('width', rightWidth < 0 ? 0 : rightWidth);
-            //         });
-            // }
+                //The brush extent cannot be less than one.  If it is, don't update the line chart.
+                if (Math.abs(extent[0] - extent[1]) <= 1) {
+                    return;
+                }
+    
+                dispatch.brush({extent: extent, brush: brush});
+    
+    
+                updateBrushBG();
+    
+                // Update Main (Focus)
+                var focusLinesWrap = g.select('.nv-focus .lines1Wrap')
+                    .datum(
+                    data
+                        .filter(function(d) { return !d.disabled; })
+                        .map(function(d,i) {
+                            return {
+                                key: d.key,
+                                area: d.area,
+                                classed: d.classed,
+                                values: d.values.filter(function(d,i) {
+                                    return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
+                                }),
+                                disableTooltip: d.disableTooltip
+                            };
+                        })
+                );
+                focusLinesWrap.transition().duration(duration).call(lines1);
+    
+    
+                // Update Main (Focus) Axes
+                updateXAxis();
+                updateYAxis();
+            }
+
+            function updateBrushBG() {
+                if (!brush.empty()) brush.extent(brushExtent);
+                brushBG
+                    .data([brush.empty() ? x2.domain() : brushExtent])
+                    .each(function(d,i) {
+                        var leftWidth = x2(d[0]) - x.range()[0],
+                            rightWidth = availableWidth - x2(d[1]);
+                        d3.select(this).select('.left')
+                            .attr('width',  leftWidth < 0 ? 0 : leftWidth);
+    
+                        d3.select(this).select('.right')
+                            .attr('x', x2(d[1]))
+                            .attr('width', rightWidth < 0 ? 0 : rightWidth);
+                    });
+            }
 
 
 
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
 
+            state
+                .setter(stateSetter(data), chart.update)
+                .getter(stateGetter(data))
+                .update();
+
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
-
+if(true) {
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
             var dataScatters1 = data.filter(function(d) {return d.type == 'scatter' && d.yAxis == 1});
@@ -9240,17 +9227,21 @@ nv.models.multiChart = function() {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-
+}
+        
+    
             x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
 
-            x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE need range to build brush(?)
+            x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE need range to build brush(?) (doesn't seem to do anything)
 
+            var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
+            var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
+            var g = wrap.select('g');
 
-            var wrap = container.selectAll('g.wrap.multiChart').data([data]);
-            var gEnter = wrap.enter().append('g').attr('class', 'wrap nvd3 multiChart').append('g');
-
+            gEnter.append('g').attr('class', 'nv-focus');
+ 
             gEnter.append('g').attr('class', 'nv-x nv-axis');
             gEnter.append('g').attr('class', 'nv-y1 nv-axis');
             gEnter.append('g').attr('class', 'nv-y2 nv-axis');
@@ -9265,58 +9256,31 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body').append('svg');
-                        // .attr('width', availableWidth)
-                        // .attr('height', availableHeight2);
+            var svg = d3.select('body').append('svg')
+                        .attr('width', availableWidth)
+                        .attr('height', availableHeight2);
 
-            //NOTE
-            svg.append('defs').append('clipPath')
-                .attr('id', 'clip')
-                .append('rect')
-                .attr('width', availableWidth)  
-                .attr('height', availableHeight2)
-                ;
+            //NOTE not convinced we need this
+            // svg.append('defs').append('clipPath')
+            //     .attr('id', 'clip')
+            //     .append('rect')
+            //     .attr('width', availableWidth)  
+            //     .attr('height', availableHeight2)
+            //     ;
+
 
             //NOTE
             var focus = svg.append('g')
-                            .attr('class', 'focus')
+                            .attr('class', 'nv-focus')
                             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
                         ;
 
             //NOTE
             var context = svg.append('g')
-                            .attr('class', 'context')
-                            .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')');
-
-            //NOTE too inefficient, this slows down fast
-            var line = function (d) {
-                d.forEach(function(i) {
-                    i.forEach(function(x) {
-                        // console.log(x.y)
-                        d3.svg.line()
-                            .x(function(x) { return x.x; })
-                            .y(function(x) { return x.y; })
-                            .interpolate('monotone')
+                            .attr('class', 'nv-context')
+                            .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
-                    });
-                });
-            };
-
-            //NOTE too inefficient, this slows down fast
-            var line2 = function(d) {
-               d.forEach(function(i) {
-                    i.forEach(function(x) {
-                        // console.log(x.y)
-                        d3.svg.line()
-                            .x(function(x) { return x.x; })
-                            .y(function(x) { return x.y; })
-                            .interpolate('monotone')
-                        ;
-                    });
-                });
-            };
 
             //NOTE
             focus.append('path') 
@@ -9325,35 +9289,70 @@ nv.models.multiChart = function() {
                 .attr('d', line);    //NOTE probably going to transition to resizePath
             
             focus.append('g')
-                .attr('class', 'x axis')
+                .attr('class', 'nv-x nv-axis')
                 .attr('transform', 'translate(0,' + availableHeight2 + ')')
                 .call(xAxis);
 
-            focus.append('g')
-                .attr('class', 'y axis')
-                .call(y2);
+            focus.append('g').attr('class', 'nv-y nv-axis').call(y2);
+            focus.append('g').attr('class', 'nv-background').append('rect');
+            focus.append('g').attr('class', 'lines1Wrap');
 
             context.append('path')
                 .datum(series2) 
                 .attr('class', 'line')     //NOTE should this be 'line'?
-                .attr('d', line2);    //NOTE probably going to transition to resizePath
+                .attr('d', line2);         //NOTE probably going to transition to resizePath
 
             context.append('g')
-              .attr('class', 'x axis')
+              .attr('class', 'nv-x nv-axis')
               .attr('transform', 'translate(0,' + availableHeight2 + ')')
               .call(xAxis2);
 
             context.append('g')
-              .attr('class', 'x brush')
+              .attr('class', 'nv-x brush')
               .call(brush)
             .selectAll('rect')
               .attr('y', -6)
               .attr('height', availableHeight2 + 7);
 
+            context.append('g').attr('class', 'nv-background');
+            context.append('g').attr('class', 'nv-brushBackground');
+            context.append('g').attr('class', 'lines1Wrap');
 
 
-            var g = wrap.select('g');
+            var brushBG = g.select('.nv-brushBackground').selectAll('g')
+                    .data([brushExtent || brush.extent()]);
 
+            var brushBGenter = brushBG.enter()
+                    .append('g');
+
+            brushBGenter.append('rect')
+                .attr('class', 'left')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('height', availableHeight2)
+            ;
+
+            var gBrush = g.select('.nv-x.nv-brush')
+                .call(brush);
+            gBrush.selectAll('rect')
+                .attr('height', availableHeight2);
+            gBrush.selectAll('.resize').append('path').attr('d', resizePath);
+
+            onBrush();
+
+            g.select('.nv-context .nv-background rect')
+                .attr('width', availableWidth)
+                .attr('height', availableHeight2);
+
+            g.select('.nv-context .nv-x.nv-axis')
+                .attr('transform', 'translate(0,' + y2.range()[0] + ')');
+
+
+
+
+
+
+if(true) {
             var color_array = data.map(function(d,i) {
                 return data[i].color || color(d, i);
             });
@@ -9375,13 +9374,12 @@ nv.models.multiChart = function() {
 
                 if ( margin.top != legend.height()) {
                     margin.top = legend.height();
-                    availableHeight = nv.utils.availableHeight(height, container, margin);
+                    availableHeight = nv.utils.availableHeight(height, container, margin);  //NOTE should available height 2 be recalculated here?
                 }
 
                 g.select('.legendWrap')
                     .attr('transform', 'translate(' + legendXPosition + ',' + (-margin.top) +')');
             }
-
             lines1
                 .width(availableWidth)
                 .height(availableHeight)
@@ -9442,7 +9440,7 @@ nv.models.multiChart = function() {
             var extraValue2 = dataStack2.length ? dataStack2.map(function(a){return a.values}).reduce(function(a,b){
                 return a.map(function(aVal,i){return {x: aVal.x, y: aVal.y + b[i].y}})
             }).concat([{x:0, y:0}]) : [];
-
+}
             yScale1 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
@@ -9461,7 +9459,7 @@ nv.models.multiChart = function() {
             stack2.yDomain(yScale2.domain());
 
 
-            y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE
+            y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE this doesn't seem to do anything...?
 
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
@@ -9477,6 +9475,7 @@ nv.models.multiChart = function() {
             if(dataScatters2.length){d3.transition(scatters2Wrap).call(scatters2);}
 
             xAxis
+                // .scale(x)
                 ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
                 .tickSize(-availableHeight, 0);
 
@@ -9486,9 +9485,9 @@ nv.models.multiChart = function() {
                 .call(xAxis);
 
             yAxis1
+                // .scale(yScale1)
                 ._ticks( nv.utils.calcTicksY(availableHeight/36, data) )
                 .tickSize( -availableWidth, 0);
-
 
             d3.transition(g.select('.nv-y1.nv-axis'))
                 .call(yAxis1);
@@ -9526,6 +9525,9 @@ nv.models.multiChart = function() {
             // Event Handling/Dispatching
             //------------------------------------------------------------
 
+
+
+            //NOTE
             // Taken from crossfilter (http://square.github.com/crossfilter/)
             function resizePath(d) {
                 var e = +(d == 'e'),
@@ -9541,6 +9543,59 @@ nv.models.multiChart = function() {
                     + 'M' + (4.5 * x) + ',' + (y + 8)
                     + 'V' + (2 * y - 8);
             }
+
+
+            //NOTE too inefficient, this slows down fast
+            var line = function (d) {
+                d.forEach(function(i) {
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
+                });
+            };
+
+            //NOTE too inefficient, this slows down fast
+            var line2 = function(d) {
+               d.forEach(function(i) {
+                    i.forEach(function(x) {
+                        // console.log(x.y)
+                        d3.svg.line()
+                            .x(function(x) { return x.x; })
+                            .y(function(x) { return x.y; })
+                            .interpolate('monotone')
+                        ;
+                    });
+                });
+            };
+
+            //NOTE to be called on brush event in the focus to update the chart
+            //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
+            //      the x and y calls of this though
+            function updateXAxis() {
+                g.select('g.nv-focus')     //NOTE this may have to be changed to only access the x values?
+                    .transition()
+                    .duration(duration)
+                    .call(xAxis)
+                ;
+            }
+
+            //NOTE to be called on brush event in the focus to update the chart
+            //NOTE see above notes on updateXAxis
+            function updateYAxis() {
+                // console.log(gEnter.select('g.nv-focus'))
+                g.select('g.nv-focus')
+                    .transition()
+                    .duration(duration)
+                    .call(yAxis1)
+                ;
+            }
+
+
 
             function mouseover_line(evt) {
                 var yaxis = data[evt.seriesIndex].yAxis === 2 ? yAxis2 : yAxis1;
@@ -9626,6 +9681,8 @@ nv.models.multiChart = function() {
                 } catch(e){}
               }
             }
+
+
 
             if(useInteractiveGuideline){
                 interactiveLayer.dispatch.on('elementMousemove', function(e) {
