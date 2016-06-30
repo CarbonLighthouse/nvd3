@@ -9078,6 +9078,7 @@ nv.models.multiChart = function() {
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
     function chart(selection) {
+        console.dir(selection)
         selection.each(function(data) {
             var container = d3.select(this),
                 that = this;
@@ -9147,7 +9148,7 @@ nv.models.multiChart = function() {
                 // chart.update();  //NOTE this keeps appending empty charts, but the y1 and x axes is correct!
             }
 
-            // function brushed() {
+            // function onBrush() {
             //     brushExtent = brush.empty() ? null : brush.extent();
             //     var extent = brush.empty() ? x2.domain() : brush.extent();
     
@@ -9201,10 +9202,6 @@ nv.models.multiChart = function() {
             //                 .attr('width', rightWidth < 0 ? 0 : rightWidth);
             //         });
             // }
-
-
-
-
 
 
 
@@ -9272,62 +9269,85 @@ nv.models.multiChart = function() {
 
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body').append('svg')
-                        .attr('width', availableWidth)
-                        .attr('height', availableHeight);
+            var svg = d3.select('body').append('svg');
+                        // .attr('width', availableWidth)
+                        // .attr('height', availableHeight2);
 
             //NOTE
             svg.append('defs').append('clipPath')
                 .attr('id', 'clip')
                 .append('rect')
                 .attr('width', availableWidth)  
-                .attr('height', availableHeight);
+                .attr('height', availableHeight2)
+                ;
 
             //NOTE
             var focus = svg.append('g')
                             .attr('class', 'focus')
                             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-                           ;
+                        ;
 
             //NOTE
             var context = svg.append('g')
                             .attr('class', 'context')
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')');
 
+            var line = function (d) {
+                // console.dir(d)
+                d.forEach(function(i) {
+                    console.dir(i)
+                    // console.dir(getX(i.values))
+                    d3.svg.line()
+                        .x(function(i) { return i.values.x; })
+                        .y(function(i) { return i.values.y; })
+                        .interpolate('monotone')
+                    ;
+                });
+            };
 
+            var line2 = function(d) {
+                console.dir(d)
+                console.dir(data)
+                console.dir(series1)
+
+                d3.svg.line()
+                    .x(function(d) { return d.x; })
+                    .y(function(d) { return d.y; })
+                    .interpolate('monotone')
+                ;
+            };
 
             //NOTE
             focus.append('path') 
                 .datum(data)   
                 .attr('class', 'lines')     //NOTE should this be 'line'?
-                .attr('d', resizePath)    //NOTE what?
-            ;
-
+                .attr('d', line);    //NOTE probably going to transition to resizePath
+            
             focus.append('g')
                 .attr('class', 'x axis')
                 .attr('transform', 'translate(0,' + availableHeight2 + ')')
                 .call(xAxis);
 
-            focus.append("g")
-                .attr("class", "y axis")
+            focus.append('g')
+                .attr('class', 'y axis')
                 .call(y2);
 
             context.append('path')
                 .datum(data) 
-                .attr("class", "lines")     //NOTE should this be 'line'?
-                .attr("d", resizePath);    //NOTE what?
+                .attr('class', 'lines')     //NOTE should this be 'line'?
+                .attr('d', line2);    //NOTE probably going to transition to resizePath
 
-            context.append("g")
-              .attr("class", "x axis")
-              .attr("transform", "translate(0," + availableHeight2 + ")")
+            context.append('g')
+              .attr('class', 'x axis')
+              .attr('transform', 'translate(0,' + availableHeight2 + ')')
               .call(xAxis2);
 
-            context.append("g")
-              .attr("class", "x brush")
+            context.append('g')
+              .attr('class', 'x brush')
               .call(brush)
-            .selectAll("rect")
-              .attr("y", -6)
-              .attr("height", availableHeight2 + 7);
+            .selectAll('rect')
+              .attr('y', -6)
+              .attr('height', availableHeight2 + 7);
 
 
 

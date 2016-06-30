@@ -131,7 +131,7 @@ nv.models.multiChart = function() {
                 // chart.update();  //NOTE this keeps appending empty charts, but the y1 and x axes is correct!
             }
 
-            // function brushed() {
+            // function onBrush() {
             //     brushExtent = brush.empty() ? null : brush.extent();
             //     var extent = brush.empty() ? x2.domain() : brush.extent();
     
@@ -280,11 +280,29 @@ nv.models.multiChart = function() {
 
 
 
+            var line = function (d) {
+                // console.dir(d[0][0].x)
+                // console.dir(lines1.x())
+                d3.svg.line()
+                    .x(lines1.x())
+                    .y(yScale1)
+                    .interpolate('linear')
+                    ;
+            };
+
+            var line2 = function(d) {
+                d3.svg.line()
+                    .x(lines2.x())
+                    .y(lines2.y())
+                    .interpolate('linear')
+                    ;
+            };
+
             //NOTE
             focus.append('path') 
                 .datum(data)   
                 .attr('class', 'lines')     //NOTE should this be 'line'?
-                .attr('d', resizePath)    //NOTE what?
+                .attr('d', line(series1))    //NOTE probably going to transition to resizePath
             ;
 
             focus.append('g')
@@ -299,7 +317,7 @@ nv.models.multiChart = function() {
             context.append('path')
                 .datum(data) 
                 .attr("class", "lines")     //NOTE should this be 'line'?
-                .attr("d", resizePath);    //NOTE what?
+                .attr("d", line2(series2));    //NOTE probably going to transition to resizePath
 
             context.append("g")
               .attr("class", "x axis")
@@ -312,6 +330,7 @@ nv.models.multiChart = function() {
             .selectAll("rect")
               .attr("y", -6)
               .attr("height", availableHeight2 + 7);
+
 
 
 
