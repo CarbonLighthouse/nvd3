@@ -9116,18 +9116,10 @@ nv.models.multiChart = function() {
 
             if (brushExtent) brush.extent(brushExtent);
 
-            // NOTE
-            function brushed() {
-                x.domain(brush.empty() ? x2.domain() : brush.extent());
-                focus.select(".line").attr("d", line);
-                focus.select(".nv-x.nv-axis").call(xAxis);
-            }
-
             function onBrush() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
                 focus.select(".line").attr("d", line);
                 focus.select(".nv-x.nv-axis").call(xAxis);
-
 
                 brushExtent = brush.empty() ? null : brush.extent();
                 var extent = brush.empty() ? x2.domain() : brush.extent();
@@ -9159,6 +9151,8 @@ nv.models.multiChart = function() {
                             };
                         })
                 );
+
+
                 focusLinesWrap.transition().duration(duration).call(lines1);
     
     
@@ -9582,6 +9576,7 @@ if(true) {
                     .duration(duration)
                     .call(xAxis)
                 ;
+
             }
 
             //NOTE to be called on brush event in the focus to update the chart
