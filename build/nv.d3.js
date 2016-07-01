@@ -9078,7 +9078,7 @@ nv.models.multiChart = function() {
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch('brush', 'renderEnd')
+        dispatch = d3.dispatch('brush')
         ;
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
@@ -9095,74 +9095,12 @@ nv.models.multiChart = function() {
                 .x(x2)
                 .on("brush", onBrush);
 
-            if (brushExtent) brush.extent(brushExtent);
-
-            function onBrush() {
-                x.domain(brush.empty() ? x2.domain() : brush.extent());
-                focus.select(".line").attr("d", line);
-                focus.select(".nv-x.nv-axis").call(xAxis);
-
-                brushExtent = brush.empty() ? null : brush.extent();
-                var extent = brush.empty() ? x2.domain() : brush.extent();
-    
-                //The brush extent cannot be less than one.  If it is, don't update the line chart.
-                if (Math.abs(extent[0] - extent[1]) <= 1) {
-                    return;
-                }
-    
-                dispatch.brush({extent: extent, brush: brush});
-    
-    
-                updateBrushBG();
-    
-                // Update Main (Focus)
-                var focusLinesWrap = g.select('.nv-focus .lines1Wrap')
-                    .datum(
-                    data
-                        .filter(function(d) { return !d.disabled; })
-                        .map(function(d,i) {
-                            return {
-                                key: d.key,
-                                area: d.area,
-                                classed: d.classed,
-                                values: d.values.filter(function(d,i) {
-                                    return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
-                                }),
-                                disableTooltip: d.disableTooltip
-                            };
-                        })
-                );
-
-
-                focusLinesWrap.transition().duration(duration).call(lines1);
-    
-    
-                // Update Main (Focus) Axes
-                updateXAxis(brush);
-                updateYAxis();
-            }
-
-            function updateBrushBG() {
-                if (!brush.empty()) brush.extent(brushExtent);
-                brushBG
-                    .data([brush.empty() ? x2.domain() : brushExtent])
-                    .each(function(d,i) {
-                        var leftWidth = x2(d[0]) - x.range()[0],
-                            rightWidth = availableWidth - x2(d[1]);
-                        d3.select(this).select('.left')
-                            .attr('width',  leftWidth < 0 ? 0 : leftWidth);
-    
-                        d3.select(this).select('.right')
-                            .attr('x', x2(d[1]))
-                            .attr('width', rightWidth < 0 ? 0 : rightWidth);
-                    });
-            }
+            // if (brushExtent) brush.extent(brushExtent);
 
 
 
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
-
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
@@ -9176,7 +9114,7 @@ if(true) {
             var dataBars2 =  data.filter(function(d) {return d.type == 'bar'  && d.yAxis == 2});
             var dataStack1 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 1});
             var dataStack2 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 2});
-
+console.dir(dataLines1)
             // Display noData message if there's nothing to show.
             if (!data || !data.length || !data.filter(function(d) { return d.values.length }).length) {
                 nv.utils.noData(chart, container);
@@ -9205,7 +9143,7 @@ if(true) {
                 .range([0, availableWidth]);
 
 
-            x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE need range to build brush(?) (doesn't seem to do anything)
+            x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE
 
             var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
             var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
@@ -9228,7 +9166,7 @@ if(true) {
             gEnter.append('g').attr('class', 'nv-interactive');
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body div#chart1').append('svg')
+            var svg = d3.select('body div#chart1').append('svg') //NOTE appending 'svg' is happening each time we use the legend
                         .attr('width', availableWidth)
                         .attr('height', availableHeight2);
 
@@ -9253,11 +9191,11 @@ if(true) {
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
 
-            //NOTE
-            focus.append('path') 
-                .datum(series1)   
-                .attr('class', 'line')     //NOTE 
-                .attr('d', line);    //NOTE probably going to transition to resizePath
+            // //NOTE
+            // focus.append('path') 
+            //     .datum(series1)   
+            //     .attr('class', 'line')     //NOTE 
+            //     .attr('d', line);    //NOTE probably going to transition to resizePath
             
             // focus.append('g')
             //     .attr('class', 'nv-x nv-axis')
@@ -9268,10 +9206,10 @@ if(true) {
             // focus.append('g').attr('class', 'nv-background').append('rect');
             // focus.append('g').attr('class', 'lines1Wrap');
 
-            context.append('path')
-                .datum(series2) 
-                .attr('class', 'line')     //NOTE should
-                .attr('d', line2);         //NOTE probably going to transition to resizePath
+            // context.append('path')
+            //     .datum(series2) 
+            //     .attr('class', 'line')     //NOTE should
+            //     .attr('d', line2);         //NOTE probably going to transition to resizePath
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
@@ -9290,33 +9228,31 @@ if(true) {
             // context.append('g').attr('class', 'lines1Wrap');
 
 
-            var brushBG = g.select('.nv-brushBackground').selectAll('g')
+            var brushBG = g/*.select('.nv-brushBackground')*/.selectAll('g')
                     .data([brushExtent || brush.extent()]);
 
-            var brushBGenter = brushBG.enter()
-                    .append('g');
+            // var brushBGenter = brushBG.enter()
+            //         .append('g');
 
-            brushBGenter.append('rect')
-                .attr('class', 'left')
-                .attr('x', 0)
-                .attr('y', 0)
-                .attr('height', availableHeight2)
-            ;
+            // brushBGenter.append('rect')
+            //     .attr('class', 'left')
+            //     .attr('x', 0)
+            //     .attr('y', 0)
+            //     .attr('height', availableHeight2)
+            // ;
 
-            var gBrush = g.select('.nv-x.nv-brush')
-                .call(brush);
-            gBrush.selectAll('rect')
-                .attr('height', availableHeight2);
-            gBrush.selectAll('.resize').append('path').attr('d', resizePath);
+            // var gBrush = g.select('.nv-x.nv-brush')
+            //     .call(brush);
+            // gBrush.selectAll('rect')
+            //     .attr('height', availableHeight2);
+            // gBrush.selectAll('.resize').append('path').attr('d', resizePath);
 
-            onBrush();
+            // g.select('.nv-context .nv-background rect')
+            //     .attr('width', availableWidth)
+            //     .attr('height', availableHeight2);
 
-            g.select('.nv-context .nv-background rect')
-                .attr('width', availableWidth)
-                .attr('height', availableHeight2);
-
-            g.select('.nv-context .nv-x.nv-axis')
-                .attr('transform', 'translate(0,' + y2.range()[0] + ')');
+            // g.select('.nv-context .nv-x.nv-axis')
+            //     .attr('transform', 'translate(0,' + y2.range()[0] + ')');
 
 
 
@@ -9430,7 +9366,7 @@ if(true) {
             stack2.yDomain(yScale2.domain());
 
 
-            y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE this doesn't seem to do anything...?
+            y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE
 
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
@@ -9482,6 +9418,8 @@ if(true) {
                 chart.update();
             });
 
+
+
             if(useInteractiveGuideline){
                 interactiveLayer
                     .width(availableWidth)
@@ -9516,46 +9454,153 @@ if(true) {
             }
 
 
-            //NOTE too inefficient, this slows down fast
-            var line = function (d) {
-                d.forEach(function(i) {
-                    // console.log(i)
-                    i.values.forEach(function(x) {
-                        // console.log(x.y)
-                        d3.svg.line()
-                            .x(function(x) { return x.x; })
-                            .y(function(x) { return x.y; })
-                            .interpolate('monotone')
-                        ;
-                    });
-                });
-            };
+            // //NOTE too inefficient, this slows down fast
+            // var line = function (d) {
+            //     d.forEach(function(i) {
+            //         // console.log(i)
+            //         i.values.forEach(function(x) {
+            //             // console.log(x.y)
+            //             d3.svg.line()
+            //                 .x(function(x) { return x.x; })
+            //                 .y(function(x) { return x.y; })
+            //                 .interpolate('monotone')
+            //             ;
+            //         });
+            //     });
+            // };
 
-            //NOTE too inefficient, this slows down fast
-            var line2 = function(d) {
-               d.forEach(function(i) {
-                    i.values.forEach(function(x) {
-                        // console.log(x.y)
-                        d3.svg.line()
-                            .x(function(x) { return x.x; })
-                            .y(function(x) { return x.y; })
-                            .interpolate('monotone')
-                        ;
+            // //NOTE too inefficient, this slows down fast
+            // var line2 = function(d) {
+            //    d.forEach(function(i) {
+            //         i.values.forEach(function(x) {
+            //             // console.log(x.y)
+            //             d3.svg.line()
+            //                 .x(function(x) { return x.x; })
+            //                 .y(function(x) { return x.y; })
+            //                 .interpolate('monotone')
+            //             ;
+            //         });
+            //     });
+            // };
+
+
+    var allDisabled = function(data) {
+      return data.every(function(series) {
+        return series.disabled;
+      });
+    }
+
+            function onBrush() {
+
+                x.domain(brush.empty() ? x2.domain() : brush.extent());
+                focus.select("line").attr("d", resizePath);
+                focus.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
+
+                brushExtent = brush.empty() ? null : brush.extent();
+                var extent = brush.empty() ? x2.domain() : brush.extent();
+                //The brush extent cannot be less than one.  If it is, don't update the line chart.
+                if (Math.abs(extent[0] - extent[1]) <= 1) {
+                    return;
+                }
+    
+                // dispatch.brush({extent: extent, brush: brush});
+    
+    
+                updateBrushBG();
+
+                g.select('g.nvd3.nv-wrap.nv-line')
+                    .transition()
+                    .duration(duration)
+                    .call(lines1)
+                ;
+
+                // Update Main (Focus)
+                // var focusLinesWrap = g.select('g.nvd3.ng-wrap.nv-line') //NOTE could be '.nv-focus .nv-linesWrap'
+                //     .datum(allDisabled(dataLines1) ? [{values:[]}] :
+                //            dataLines1
+                //            .filter(function(dataLine) { return !dataLine.disabled; })
+                //            .map(function(d,i) {
+                //                 return {
+                //                     area: d.area,
+                //                     fillOpacity: d.fillOpacity,
+                //                     key: d.key,
+                //                     values: d.values.filter(function(d,i) {
+                //                         return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
+                //                     })
+                //                 }
+                //             })
+                // );
+
+                // focusLinesWrap.transition().duration(duration).call(lines1);
+    
+    
+                xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
+                console.dir(xAxis.showMaxMin())
+                console.dir(lines1)
+                lines1.xDomain(xAxis.domain())
+                // Update Main (Focus) Axes
+                updateXAxis();
+                updateYAxis();
+
+
+
+            }
+
+            function updateBrushBG() {
+                if (!brush.empty()) brush.extent(brushExtent);
+                brushBG
+                    .data([brush.empty() ? x2.domain() : brushExtent])
+                    .each(function(d,i) {
+                        var leftWidth = x2(d[0]) - x.range()[0],
+                            rightWidth = availableWidth - x2(d[1]);
+                        d3.select(this).select('.left')
+                            .attr('width',  leftWidth < 0 ? 0 : leftWidth);
+    
+                        d3.select(this).select('.right')
+                            .attr('x', x2(d[1]))
+                            .attr('width', rightWidth < 0 ? 0 : rightWidth);
                     });
-                });
-            };
+            }
+
 
             //NOTE to be called on brush event in the focus to update the chart
             //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
             //      the x and y calls of this though
             function updateXAxis() {
+//                 console.dir(x.domain())
+//                 var series1 = data.filter(function(d) {console.log(d);return !d.disabled && d.yAxis == 1 && d.})
+//                     .map(function(d) {
+//                         return d.values.map(function(d,i) {
+//                             return { x: getX(d), y: getY(d) }
+//                         })
+//                     });
+
+//                 var series2 = data.filter(function(d) {return !d.disabled && d.yAxis == 2})
+//                     .map(function(d) {
+//                         return d.values.map(function(d,i) {
+//                             return { x: getX(d), y: getY(d) }
+//                         })
+//                     });
+           
+
+                g.select('g.nvd3.nv-wrap.nv-line')
+                    .transition()
+                    .duration(duration)
+                    .call(lines1)
+                ;
+
                 g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
                     .transition()
                     .duration(duration)
                     .call(xAxis)
                 ;
                 
+// lines1.domain(x.domain())
 
+
+
+
+// d3.select('lines1Wrap').transition().call(lines1);
             }
 
             //NOTE to be called on brush event in the focus to update the chart
@@ -9567,6 +9612,8 @@ if(true) {
                     .duration(duration)
                     .call(yAxis1)
                 ;
+
+
 
                 // NOTE not being used right now
                 // g.select('g.nv-y2.nv-axis.nvd3-scg')
@@ -9760,6 +9807,8 @@ if(true) {
                     tooltip();
                 });
             }
+
+            onBrush();
         });
 
         return chart;
