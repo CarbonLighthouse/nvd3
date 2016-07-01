@@ -9078,36 +9078,17 @@ nv.models.multiChart = function() {
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch('brush', 'stateChange', 'changeState', 'renderEnd'),
-        state = nv.utils.state()
+        dispatch = d3.dispatch('brush', 'renderEnd')
         ;
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
-    var stateGetter = function(data) {
-        return function(){
-            return {
-                active: data.map(function(d) { return !d.disabled; })
-            };
-        };
-    };
-
-    var stateSetter = function(data) {
-        return function(state) {
-            if (state.active !== undefined)
-                data.forEach(function(series,i) {
-                    series.disabled = !state.active[i];
-                });
-        };
-    };
 
     function chart(selection) {
         selection.each(function(data) {
             var container = d3.select(this),
                 that = this;
             nv.utils.initSVG(container);
-
-
 
             //NOTE
             var brush = d3.svg.brush()
@@ -9157,7 +9138,7 @@ nv.models.multiChart = function() {
     
     
                 // Update Main (Focus) Axes
-                updateXAxis();
+                updateXAxis(brush);
                 updateYAxis();
             }
 
@@ -9182,10 +9163,6 @@ nv.models.multiChart = function() {
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
 
-            state
-                .setter(stateSetter(data), chart.update)
-                .getter(stateGetter(data))
-                .update();
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
@@ -9236,7 +9213,7 @@ if(true) {
 
             gEnter.append('g').attr('class', 'nv-focus');
  
-            gEnter.append('g').attr('class', 'nv-x nv-axis');
+            focus = gEnter.append('g').attr('class', 'nv-x nv-axis')/*.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')*/;
             gEnter.append('g').attr('class', 'nv-y1 nv-axis');
             gEnter.append('g').attr('class', 'nv-y2 nv-axis');
             gEnter.append('g').attr('class', 'stack1Wrap');
@@ -9251,7 +9228,7 @@ if(true) {
             gEnter.append('g').attr('class', 'nv-interactive');
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body').append('svg')
+            var svg = d3.select('body div#chart1').append('svg')
                         .attr('width', availableWidth)
                         .attr('height', availableHeight2);
 
@@ -9265,10 +9242,10 @@ if(true) {
 
 
             //NOTE
-            var focus = svg.append('g')
-                            .attr('class', 'nv-focus')
-                            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-                        ;
+            // var focus = svg.append('g')
+            //                 .attr('class', 'nv-focus')
+            //                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+                        // ;
 
             //NOTE
             var context = svg.append('g')
@@ -9279,21 +9256,21 @@ if(true) {
             //NOTE
             focus.append('path') 
                 .datum(series1)   
-                .attr('class', 'line')     //NOTE should this be 'line'?
+                .attr('class', 'line')     //NOTE 
                 .attr('d', line);    //NOTE probably going to transition to resizePath
             
-            focus.append('g')
-                .attr('class', 'nv-x nv-axis')
-                .attr('transform', 'translate(0,' + availableHeight2 + ')')
-                .call(xAxis);
+            // focus.append('g')
+            //     .attr('class', 'nv-x nv-axis')
+            //     .attr('transform', 'translate(0,' + availableHeight2 + ')')
+            //     .call(xAxis);
 
-            focus.append('g').attr('class', 'nv-y nv-axis').call(y2);
-            focus.append('g').attr('class', 'nv-background').append('rect');
-            focus.append('g').attr('class', 'lines1Wrap');
+            // focus.append('g').attr('class', 'nv-y nv-axis').call(y2);
+            // focus.append('g').attr('class', 'nv-background').append('rect');
+            // focus.append('g').attr('class', 'lines1Wrap');
 
             context.append('path')
                 .datum(series2) 
-                .attr('class', 'line')     //NOTE should this be 'line'?
+                .attr('class', 'line')     //NOTE should
                 .attr('d', line2);         //NOTE probably going to transition to resizePath
 
             context.append('g')
@@ -9308,9 +9285,9 @@ if(true) {
               .attr('y', -6)
               .attr('height', availableHeight2 + 7);
 
-            context.append('g').attr('class', 'nv-background');
-            context.append('g').attr('class', 'nv-brushBackground');
-            context.append('g').attr('class', 'lines1Wrap');
+            // context.append('g').attr('class', 'nv-background');
+            // context.append('g').attr('class', 'nv-brushBackground');
+            // context.append('g').attr('class', 'lines1Wrap');
 
 
             var brushBG = g.select('.nv-brushBackground').selectAll('g')
@@ -9542,7 +9519,8 @@ if(true) {
             //NOTE too inefficient, this slows down fast
             var line = function (d) {
                 d.forEach(function(i) {
-                    i.forEach(function(x) {
+                    // console.log(i)
+                    i.values.forEach(function(x) {
                         // console.log(x.y)
                         d3.svg.line()
                             .x(function(x) { return x.x; })
@@ -9556,7 +9534,7 @@ if(true) {
             //NOTE too inefficient, this slows down fast
             var line2 = function(d) {
                d.forEach(function(i) {
-                    i.forEach(function(x) {
+                    i.values.forEach(function(x) {
                         // console.log(x.y)
                         d3.svg.line()
                             .x(function(x) { return x.x; })
@@ -9571,11 +9549,12 @@ if(true) {
             //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
             //      the x and y calls of this though
             function updateXAxis() {
-                g.select('g.nv-focus')     //NOTE this may have to be changed to only access the x values?
+                g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
                     .transition()
                     .duration(duration)
                     .call(xAxis)
                 ;
+                
 
             }
 
@@ -9583,11 +9562,18 @@ if(true) {
             //NOTE see above notes on updateXAxis
             function updateYAxis() {
                 // console.log(gEnter.select('g.nv-focus'))
-                g.select('g.nv-focus')
+                g.select('g.nv-y1.nv-axis.nvd3-svg')    //NOTE this was once 'g.nv-focus'
                     .transition()
                     .duration(duration)
                     .call(yAxis1)
                 ;
+
+                // NOTE not being used right now
+                // g.select('g.nv-y2.nv-axis.nvd3-scg')
+                //     .transition()
+                //     .duration(duration)
+                //     .call(yAxis2)
+                // ;
             }
 
 
