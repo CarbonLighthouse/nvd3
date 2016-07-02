@@ -9114,7 +9114,7 @@ if(true) {
             var dataBars2 =  data.filter(function(d) {return d.type == 'bar'  && d.yAxis == 2});
             var dataStack1 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 1});
             var dataStack2 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 2});
-console.dir(dataLines1)
+
             // Display noData message if there's nothing to show.
             if (!data || !data.length || !data.filter(function(d) { return d.values.length }).length) {
                 nv.utils.noData(chart, container);
@@ -9348,12 +9348,12 @@ if(true) {
                 return a.map(function(aVal,i){return {x: aVal.x, y: aVal.y + b[i].y}})
             }).concat([{x:0, y:0}]) : [];
 }
+
             yScale1 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
             yScale2 .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
                 .range([0, availableHeight]);
-
 
             lines1.yDomain(yScale1.domain());
             scatters1.yDomain(yScale1.domain());
@@ -9366,8 +9366,7 @@ if(true) {
             stack2.yDomain(yScale2.domain());
 
 
-            y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE
-
+            // y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
@@ -9484,11 +9483,11 @@ if(true) {
             // };
 
 
-    var allDisabled = function(data) {
-      return data.every(function(series) {
-        return series.disabled;
-      });
-    }
+    // var allDisabled = function(data) {
+    //   return data.every(function(series) {
+    //     return series.disabled;
+    //   });
+    // }
 
             function onBrush() {
 
@@ -9508,11 +9507,11 @@ if(true) {
     
                 updateBrushBG();
 
-                g.select('g.nvd3.nv-wrap.nv-line')
-                    .transition()
-                    .duration(duration)
-                    .call(lines1)
-                ;
+                // g.select('g.nvd3.nv-wrap.nv-line')
+                //     .transition()
+                //     .duration(duration)
+                //     .call(lines1)
+                // ;
 
                 // Update Main (Focus)
                 // var focusLinesWrap = g.select('g.nvd3.ng-wrap.nv-line') //NOTE could be '.nv-focus .nv-linesWrap'
@@ -9533,17 +9532,14 @@ if(true) {
 
                 // focusLinesWrap.transition().duration(duration).call(lines1);
     
-    
+
                 xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
-                console.dir(xAxis.showMaxMin())
-                console.dir(lines1)
+                // console.dir(yAxis1.domain())
                 lines1.xDomain(xAxis.domain())
+
                 // Update Main (Focus) Axes
                 updateXAxis();
                 updateYAxis();
-
-
-
             }
 
             function updateBrushBG() {
@@ -9567,22 +9563,6 @@ if(true) {
             //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
             //      the x and y calls of this though
             function updateXAxis() {
-//                 console.dir(x.domain())
-//                 var series1 = data.filter(function(d) {console.log(d);return !d.disabled && d.yAxis == 1 && d.})
-//                     .map(function(d) {
-//                         return d.values.map(function(d,i) {
-//                             return { x: getX(d), y: getY(d) }
-//                         })
-//                     });
-
-//                 var series2 = data.filter(function(d) {return !d.disabled && d.yAxis == 2})
-//                     .map(function(d) {
-//                         return d.values.map(function(d,i) {
-//                             return { x: getX(d), y: getY(d) }
-//                         })
-//                     });
-           
-
                 g.select('g.nvd3.nv-wrap.nv-line')
                     .transition()
                     .duration(duration)
@@ -9595,12 +9575,6 @@ if(true) {
                     .call(xAxis)
                 ;
                 
-// lines1.domain(x.domain())
-
-
-
-
-// d3.select('lines1Wrap').transition().call(lines1);
             }
 
             //NOTE to be called on brush event in the focus to update the chart
@@ -9613,14 +9587,12 @@ if(true) {
                     .call(yAxis1)
                 ;
 
-
-
                 // NOTE not being used right now
-                // g.select('g.nv-y2.nv-axis.nvd3-scg')
-                //     .transition()
-                //     .duration(duration)
-                //     .call(yAxis2)
-                // ;
+                g.select('g.nv-y2.nv-axis.nvd3-scg')
+                    .transition()
+                    .duration(duration)
+                    .call(yAxis2)
+                ;
             }
 
 
