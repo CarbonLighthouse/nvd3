@@ -9050,8 +9050,8 @@ nv.models.multiChart = function() {
 
     var x = d3.scale.linear(),
         x2 = d3.scale.linear(), //NOTE may have to add .range()
-        y = d3.scale.linear(),
-        y2 = d3.scale.linear(), //NOTE this may not be used since we have yscale
+        // y = d3.scale.linear(),
+        // y2 = d3.scale.linear(), //NOTE this may not be used since we have yscale
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
 
@@ -9449,69 +9449,47 @@ nv.models.multiChart = function() {
                     + 'V' + (2 * y - 8);
             }
 
-
-            // //NOTE too inefficient, this slows down fast
-            // var line = function (d) {
-            //     d.forEach(function(i) {
-            //         // console.log(i)
-            //         i.values.forEach(function(x) {
-            //             // console.log(x.y)
-            //             d3.svg.line()
-            //                 .x(function(x) { return x.x; })
-            //                 .y(function(x) { return x.y; })
-            //                 .interpolate('monotone')
-            //             ;
-            //         });
-            //     });
-            // };
-
-            // //NOTE too inefficient, this slows down fast
-            // var line2 = function(d) {
-            //    d.forEach(function(i) {
-            //         i.values.forEach(function(x) {
-            //             // console.log(x.y)
-            //             d3.svg.line()
-            //                 .x(function(x) { return x.x; })
-            //                 .y(function(x) { return x.y; })
-            //                 .interpolate('monotone')
-            //             ;
-            //         });
-            //     });
-            // };
-
-
-    // var allDisabled = function(data) {
-    //   return data.every(function(series) {
-    //     return series.disabled;
-    //   });
-    // }
-
             function onBrush() {
                 
                 focus.select("g.nv-y.nv-axis.nvd3-svg").call(yAxis1);
                 // focus.select("g.nv-y2.nv-axis.nvd3-svg").call(yAxis2);
 
-                brushExtent = brush.empty() ? null : brush.extent();
                 var extent = brush.empty() ? x2.domain() : brush.extent();
-                // var yExtent = lines1.yScale();
 
                 //The brush extent cannot be less than one.  If it is, don't update the line chart.
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
                     return;
                 }
-
-                // if (Math.abs(yExtent[0] - extent[1]) <= 1) {
-                //     return;
-                // }
      
                 // dispatch.brush({extent: extent, brush: brush});
     
                 // updateBrushBG();
-    
 
                 xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
                 lines1.xDomain(xAxis.domain());
+                // lines2.xDomain(xAxis.domain());
 
+
+                //y values based off brushed x values
+console.log(brush.extent())
+                var dataInBrushedX = []
+                data.forEach(function(d, i) { 
+                    d.values.forEach(function(x, y) {
+                        if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
+                            dataInBrushedX.push(x);
+                        }
+                    })
+                });
+
+                var yMin = Math.min.apply(null, dataInBrushedX.map(function(i) {
+                    return i.y;
+                }));
+                var yMax = Math.max.apply(null, dataInBrushedX.map(function(i) {
+                    return i.y;
+                }));
+
+                // console.log(yMin);
+                // console.log(yMax);
 
                 // yAxis1.domain(lines1.yDomain());
                 // lines2.xDomain(xAxis.domain());
@@ -9522,7 +9500,7 @@ nv.models.multiChart = function() {
                 
                 // Update Main (Focus) Axes
                 updateXAxis();
-                updateYAxis(extent);
+                updateYAxis(yMin, yMax);
 
                 g.select('g.lines1Wrap.nvd3-svg')
                     .transition()
@@ -9530,11 +9508,11 @@ nv.models.multiChart = function() {
                     .call(lines1)
                 ;
 
-                g.select('g.lines2Wrap.nvd3-svg')
-                    .transition()
-                    .duration(duration)
-                    .call(lines2)
-                ;
+                // g.select('g.lines2Wrap.nvd3-svg')
+                //     .transition()
+                //     .duration(duration)
+                //     .call(lines2)
+                // ;
 
             }
 
@@ -9559,16 +9537,11 @@ nv.models.multiChart = function() {
             //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
             //      the x and y calls of this though
             function updateXAxis() {
+                // console.dir(x.domain())
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
-
+                // console.dir(x.domain())
                 g.select("line").attr("d", resizePath);
                 g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
-
-
-// console.dir(lines1)
-// console.dir(lines1.xDomain())
-// console.dir(lines1.yDomain())
-
 
                 // g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
                 //     .transition()
@@ -9579,26 +9552,12 @@ nv.models.multiChart = function() {
 
             //NOTE to be called on brush event in the focus to update the chart
             //NOTE see above notes on updateXAxis
-            function updateYAxis(extent) {
+            function updateYAxis(yMin, yMax) {
 
-                var yDataInBrushedX = data.filter(function(d, i) { 
-                    return d.values.filter(function(x, y) {
-                        if (x.x >= extent[0] && x.x <= extent[1]) {
-                            return x.y;
-                        }
-                    })
-                });
-
-// console.log(yDataInBrushedX);
-// console.log(d3.min(yDataInBrushedX, function(x) { return (d3.max(x.values)}))
-                yAxis1.domain([
-                    d3.min(yDataInBrushedX, function(x) { return d3.min(x.values, function(i) { return i.y; }); }),
-                    d3.max(yDataInBrushedX, function(x) { return d3.max(x.values, function(i) { return i.y; }); })
-                ]);
-
-                // console.dir(yAxis1.domain())
-                // yScale1.domain(brush.empty() ? lines1.yDomain() : brush.extent());
-                // yScale1.domain(brush.empty() ? y2.domain() : brush.extent());
+// d3.min(yDataInBrushedX, function(x) { console.log(d3.min()); }) )
+                if (brush.extent()) {
+                    yAxis1.domain([yMin, yMax]);
+                }
 
                 g.select("line").attr("d", resizePath);
                 g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(0).call(yAxis1);
