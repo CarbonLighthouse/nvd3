@@ -9105,7 +9105,7 @@ nv.models.multiChart = function() {
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
-if(true) {
+
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
             var dataScatters1 = data.filter(function(d) {return d.type == 'scatter' && d.yAxis == 1});
@@ -9136,7 +9136,7 @@ if(true) {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-}
+
         
     
             x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
@@ -9144,6 +9144,8 @@ if(true) {
 
 
             x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE
+
+
 
             var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
             var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
@@ -9214,7 +9216,8 @@ if(true) {
             context.append('g')
               .attr('class', 'nv-x nv-axis')
               .attr('transform', 'translate(0,' + availableHeight2 + ')')
-              .call(xAxis2);
+              .call(xAxis2)
+              ;
 
             context.append('g')
               .attr('class', 'nv-x brush')
@@ -9228,6 +9231,7 @@ if(true) {
             // context.append('g').attr('class', 'lines1Wrap');
 
 
+            //NOTE the select here doesn't seem to cause an issue
             var brushBG = g/*.select('.nv-brushBackground')*/.selectAll('g')
                     .data([brushExtent || brush.extent()]);
 
@@ -9259,7 +9263,6 @@ if(true) {
 
 
 
-if(true) {
             var color_array = data.map(function(d,i) {
                 return data[i].color || color(d, i);
             });
@@ -9347,7 +9350,6 @@ if(true) {
             var extraValue2 = dataStack2.length ? dataStack2.map(function(a){return a.values}).reduce(function(a,b){
                 return a.map(function(aVal,i){return {x: aVal.x, y: aVal.y + b[i].y}})
             }).concat([{x:0, y:0}]) : [];
-}
 
             yScale1 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
                 .range([0, availableHeight]);
@@ -9381,7 +9383,6 @@ if(true) {
             if(dataScatters2.length){d3.transition(scatters2Wrap).call(scatters2);}
 
             xAxis
-                // .scale(x)
                 ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
                 .tickSize(-availableHeight, 0);
 
@@ -9391,7 +9392,6 @@ if(true) {
                 .call(xAxis);
 
             yAxis1
-                // .scale(yScale1)
                 ._ticks( nv.utils.calcTicksY(availableHeight/36, data) )
                 .tickSize( -availableWidth, 0);
 
@@ -9425,7 +9425,7 @@ if(true) {
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x);
+                    .xScale(x);     //NOTE changing this to x2 should fix the interactive layer, test after fixing the line overlay
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
 
@@ -9433,9 +9433,6 @@ if(true) {
             // Event Handling/Dispatching
             //------------------------------------------------------------
 
-
-
-            //NOTE
             // Taken from crossfilter (http://square.github.com/crossfilter/)
             function resizePath(d) {
                 var e = +(d == 'e'),
@@ -9490,56 +9487,55 @@ if(true) {
     // }
 
             function onBrush() {
-
-                x.domain(brush.empty() ? x2.domain() : brush.extent());
-                focus.select("line").attr("d", resizePath);
-                focus.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
+                
+                focus.select("g.nv-y.nv-axis.nvd3-svg").call(yAxis1);
+                // focus.select("g.nv-y2.nv-axis.nvd3-svg").call(yAxis2);
 
                 brushExtent = brush.empty() ? null : brush.extent();
                 var extent = brush.empty() ? x2.domain() : brush.extent();
+                // var yExtent = lines1.yScale();
+
                 //The brush extent cannot be less than one.  If it is, don't update the line chart.
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
                     return;
                 }
-    
+
+                // if (Math.abs(yExtent[0] - extent[1]) <= 1) {
+                //     return;
+                // }
+     
                 // dispatch.brush({extent: extent, brush: brush});
     
-    
-                updateBrushBG();
-
-                // g.select('g.nvd3.nv-wrap.nv-line')
-                //     .transition()
-                //     .duration(duration)
-                //     .call(lines1)
-                // ;
-
-                // Update Main (Focus)
-                // var focusLinesWrap = g.select('g.nvd3.ng-wrap.nv-line') //NOTE could be '.nv-focus .nv-linesWrap'
-                //     .datum(allDisabled(dataLines1) ? [{values:[]}] :
-                //            dataLines1
-                //            .filter(function(dataLine) { return !dataLine.disabled; })
-                //            .map(function(d,i) {
-                //                 return {
-                //                     area: d.area,
-                //                     fillOpacity: d.fillOpacity,
-                //                     key: d.key,
-                //                     values: d.values.filter(function(d,i) {
-                //                         return lines1.x()(d,i) >= extent[0] && lines1.x()(d,i) <= extent[1];
-                //                     })
-                //                 }
-                //             })
-                // );
-
-                // focusLinesWrap.transition().duration(duration).call(lines1);
+                // updateBrushBG();
     
 
                 xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
-                // console.dir(yAxis1.domain())
-                lines1.xDomain(xAxis.domain())
+                lines1.xDomain(xAxis.domain());
 
+
+                // yAxis1.domain(lines1.yDomain());
+                // lines2.xDomain(xAxis.domain());
+
+                //NOTE not actually sure if this is working... can't examine data
+                // yAxis1.scale([Math.ceil(yExtent[0]), Math.floor(yExtent[1])]);
+                // lines1.yDomain(yExtent)
+                
                 // Update Main (Focus) Axes
                 updateXAxis();
-                updateYAxis();
+                updateYAxis(extent);
+
+                g.select('g.lines1Wrap.nvd3-svg')
+                    .transition()
+                    .duration(duration)
+                    .call(lines1)
+                ;
+
+                g.select('g.lines2Wrap.nvd3-svg')
+                    .transition()
+                    .duration(duration)
+                    .call(lines2)
+                ;
+
             }
 
             function updateBrushBG() {
@@ -9563,36 +9559,62 @@ if(true) {
             //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
             //      the x and y calls of this though
             function updateXAxis() {
-                g.select('g.nvd3.nv-wrap.nv-line')
-                    .transition()
-                    .duration(duration)
-                    .call(lines1)
-                ;
+                x.domain(brush.empty() ? x2.domain() : brush.extent());
 
-                g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
-                    .transition()
-                    .duration(duration)
-                    .call(xAxis)
-                ;
-                
+                g.select("line").attr("d", resizePath);
+                g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
+
+
+// console.dir(lines1)
+// console.dir(lines1.xDomain())
+// console.dir(lines1.yDomain())
+
+
+                // g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
+                //     .transition()
+                //     .duration(duration)
+                //     .call(xAxis)
+                // ;
             }
 
             //NOTE to be called on brush event in the focus to update the chart
             //NOTE see above notes on updateXAxis
-            function updateYAxis() {
-                // console.log(gEnter.select('g.nv-focus'))
-                g.select('g.nv-y1.nv-axis.nvd3-svg')    //NOTE this was once 'g.nv-focus'
-                    .transition()
-                    .duration(duration)
-                    .call(yAxis1)
-                ;
+            function updateYAxis(extent) {
+
+                var yDataInBrushedX = data.filter(function(d, i) { 
+                    return d.values.filter(function(x, y) {
+                        if (x.x >= extent[0] && x.x <= extent[1]) {
+                            return x.y;
+                        }
+                    })
+                });
+
+// console.log(yDataInBrushedX);
+// console.log(d3.min(yDataInBrushedX, function(x) { return (d3.max(x.values)}))
+                yAxis1.domain([
+                    d3.min(yDataInBrushedX, function(x) { return d3.min(x.values, function(i) { return i.y; }); }),
+                    d3.max(yDataInBrushedX, function(x) { return d3.max(x.values, function(i) { return i.y; }); })
+                ]);
+
+                // console.dir(yAxis1.domain())
+                // yScale1.domain(brush.empty() ? lines1.yDomain() : brush.extent());
+                // yScale1.domain(brush.empty() ? y2.domain() : brush.extent());
+
+                g.select("line").attr("d", resizePath);
+                g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(0).call(yAxis1);
+
+                // g.select('g.nv-y1.nv-axis.nvd3-svg')    //NOTE this was once 'g.nv-focus'
+                //     .transition()
+                //     .duration(duration)
+                //     .call(yAxis1)
+                // ;
 
                 // NOTE not being used right now
-                g.select('g.nv-y2.nv-axis.nvd3-scg')
-                    .transition()
-                    .duration(duration)
-                    .call(yAxis2)
-                ;
+                // g.select('g.nv-y2.nv-axis.nvd3-svg')
+                //     .transition()
+                //     .duration(duration)
+                //     .call(yAxis2)
+                // ;
             }
 
 
