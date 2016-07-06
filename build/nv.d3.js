@@ -9471,7 +9471,6 @@ nv.models.multiChart = function() {
 
 
                 //y values based off brushed x values
-console.log(brush.extent())
                 var dataInBrushedX = []
                 data.forEach(function(d, i) { 
                     d.values.forEach(function(x, y) {
@@ -9498,15 +9497,23 @@ console.log(brush.extent())
                 // yAxis1.scale([Math.ceil(yExtent[0]), Math.floor(yExtent[1])]);
                 // lines1.yDomain(yExtent)
                 
+                // var yDataInBrushedX = []; 
+                // data.forEach(function(d) { 
+                //     d.values.reduce(function(prev, curr) {
+                //         return prev.
+                //     });
+                // });
+
+                
                 // Update Main (Focus) Axes
                 updateXAxis();
                 updateYAxis(yMin, yMax);
 
-                g.select('g.lines1Wrap.nvd3-svg')
-                    .transition()
-                    .duration(duration)
-                    .call(lines1)
-                ;
+                // g.select('g.lines1Wrap.nvd3-svg')
+                //     .transition()
+                //     .duration(duration)
+                //     .call(lines1)
+                // ;
 
                 // g.select('g.lines2Wrap.nvd3-svg')
                 //     .transition()
@@ -9553,14 +9560,16 @@ console.log(brush.extent())
             //NOTE to be called on brush event in the focus to update the chart
             //NOTE see above notes on updateXAxis
             function updateYAxis(yMin, yMax) {
-
-// d3.min(yDataInBrushedX, function(x) { console.log(d3.min()); }) )
-                if (brush.extent()) {
+console.log(brush.extent())
+                if (brush.extent()[0] !== 0) {
                     yAxis1.domain([yMin, yMax]);
                 }
-
                 g.select("line").attr("d", resizePath);
                 g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(0).call(yAxis1);
+
+                lines1.yDomain(yAxis1.domain());
+                g.select('g.lines1Wrap.nvd3-svg').transition().duration(duration).call(lines1);
+                
 
                 // g.select('g.nv-y1.nv-axis.nvd3-svg')    //NOTE this was once 'g.nv-focus'
                 //     .transition()
