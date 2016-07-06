@@ -9023,7 +9023,7 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 50, left: 60},
-        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //NOTE
+        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //margin for the context below the graph
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -9041,7 +9041,10 @@ nv.models.multiChart = function() {
         useInteractiveGuideline = false,
         legendRightAxisHint = ' (right axis)',
         brushExtent = null,
-        duration = 250
+        duration = 250,
+        yMin,
+        yMax,
+        dataInBrushedX = []
         ;
 
     //============================================================
@@ -9050,17 +9053,11 @@ nv.models.multiChart = function() {
 
     var x = d3.scale.linear(),
         x2 = d3.scale.linear(), //NOTE may have to add .range()
-        // y = d3.scale.linear(),
-        // y2 = d3.scale.linear(), //NOTE this may not be used since we have yscale
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
 
         lines1 = nv.models.line().yScale(yScale1),
         lines2 = nv.models.line().yScale(yScale2),
-
-        // x = lines1.xScale(),
-        // x2 = lines1.xScale(), //NOTE may have to add .range()
-        //NOTE may have to make a focusLines object to use (see area2)
 
         scatters1 = nv.models.scatter().yScale(yScale1),
         scatters2 = nv.models.scatter().yScale(yScale2),
@@ -9072,7 +9069,7 @@ nv.models.multiChart = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
-        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),   //NOTE
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),   // Context xAxis, used to update on brush
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
@@ -9080,6 +9077,9 @@ nv.models.multiChart = function() {
         tooltip = nv.models.tooltip(),
         dispatch = d3.dispatch('brush')
         ;
+
+        const y = nv.models.axis();  //holder for initial yaxis1 domain, which will update on brush
+        const y2 = nv.models.axis(); //holder for initial yaxis2 domain, which will update on brush
 
     var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
 
@@ -9090,14 +9090,9 @@ nv.models.multiChart = function() {
                 that = this;
             nv.utils.initSVG(container);
 
-            //NOTE
             var brush = d3.svg.brush()
                 .x(x2)
                 .on("brush", onBrush);
-
-            // if (brushExtent) brush.extent(brushExtent);
-
-
 
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
@@ -9136,16 +9131,11 @@ nv.models.multiChart = function() {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-
-        
     
             x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
-
-            x2  .domain(x.domain()).range([0, availableWidth]);    //NOTE
-
-
+            x2  .domain(x.domain()).range([0, availableWidth]);
 
             var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
             var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
@@ -9153,7 +9143,7 @@ nv.models.multiChart = function() {
 
             gEnter.append('g').attr('class', 'nv-focus');
  
-            focus = gEnter.append('g').attr('class', 'nv-x nv-axis')/*.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')*/;
+            focus = gEnter.append('g').attr('class', 'nv-x nv-axis');
             gEnter.append('g').attr('class', 'nv-y1 nv-axis');
             gEnter.append('g').attr('class', 'nv-y2 nv-axis');
             gEnter.append('g').attr('class', 'stack1Wrap');
@@ -9168,9 +9158,11 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'nv-interactive');
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body div#chart1').append('svg') //NOTE appending 'svg' is happening each time we use the legend
+            var svg = d3.select('body div#chart1 ')
+                        .append('svg') //NOTE appending 'svg' is happening each time we use the legend
+                        .attr('id', 'contextBar')
                         .attr('width', availableWidth)
-                        .attr('height', availableHeight2);
+                        .attr('height', availableHeight2 + margin2.top + margin2.bottom);
 
             //NOTE not convinced we need this
             // svg.append('defs').append('clipPath')
@@ -9187,9 +9179,13 @@ nv.models.multiChart = function() {
             //                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
                         // ;
 
+            d3.select('svg#contextBar')
+                .style({'height': '70px'})
+
             //NOTE
             var context = svg.append('g')
                             .attr('class', 'nv-context')
+                            .attr('height', availableHeight2)
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
 
@@ -9215,6 +9211,7 @@ nv.models.multiChart = function() {
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
+              .attr('height', availableHeight2)
               .attr('transform', 'translate(0,' + availableHeight2 + ')')
               .call(xAxis2)
               ;
@@ -9257,10 +9254,6 @@ nv.models.multiChart = function() {
 
             // g.select('.nv-context .nv-x.nv-axis')
             //     .attr('transform', 'translate(0,' + y2.range()[0] + ')');
-
-
-
-
 
 
             var color_array = data.map(function(d,i) {
@@ -9367,9 +9360,6 @@ nv.models.multiChart = function() {
             bars2.yDomain(yScale2.domain());
             stack2.yDomain(yScale2.domain());
 
-
-            // y2.domain(yScale1.domain()).range([availableHeight2, 0]); //NOTE
-
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
 
@@ -9417,17 +9407,19 @@ nv.models.multiChart = function() {
                 chart.update();
             });
 
-
-
             if(useInteractiveGuideline){
                 interactiveLayer
                     .width(availableWidth)
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x);     //NOTE changing this to x2 should fix the interactive layer, test after fixing the line overlay
+                    .xScale(x); 
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
+
+            // sets a constant value for the original yAxis1 before brush events occur
+            y.domain(yAxis1.domain());  
+            y2.domain(yAxis2.domain());
 
             //============================================================
             // Event Handling/Dispatching
@@ -9451,7 +9443,7 @@ nv.models.multiChart = function() {
 
             function onBrush() {
                 
-                focus.select("g.nv-y.nv-axis.nvd3-svg").call(yAxis1);
+                // focus.select("g.nv-y.nv-axis.nvd3-svg").call(yAxis1);
                 // focus.select("g.nv-y2.nv-axis.nvd3-svg").call(yAxis2);
 
                 var extent = brush.empty() ? x2.domain() : brush.extent();
@@ -9469,9 +9461,8 @@ nv.models.multiChart = function() {
                 lines1.xDomain(xAxis.domain());
                 // lines2.xDomain(xAxis.domain());
 
-
+                dataInBrushedX = []
                 //y values based off brushed x values
-                var dataInBrushedX = []
                 data.forEach(function(d, i) { 
                     d.values.forEach(function(x, y) {
                         if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
@@ -9480,40 +9471,16 @@ nv.models.multiChart = function() {
                     })
                 });
 
-                var yMin = Math.min.apply(null, dataInBrushedX.map(function(i) {
+                yMin = Math.min.apply(null, dataInBrushedX.map(function(i) {
                     return i.y;
                 }));
-                var yMax = Math.max.apply(null, dataInBrushedX.map(function(i) {
+                yMax = Math.max.apply(null, dataInBrushedX.map(function(i) {
                     return i.y;
                 }));
-
-                // console.log(yMin);
-                // console.log(yMax);
-
-                // yAxis1.domain(lines1.yDomain());
-                // lines2.xDomain(xAxis.domain());
-
-                //NOTE not actually sure if this is working... can't examine data
-                // yAxis1.scale([Math.ceil(yExtent[0]), Math.floor(yExtent[1])]);
-                // lines1.yDomain(yExtent)
-                
-                // var yDataInBrushedX = []; 
-                // data.forEach(function(d) { 
-                //     d.values.reduce(function(prev, curr) {
-                //         return prev.
-                //     });
-                // });
-
                 
                 // Update Main (Focus) Axes
                 updateXAxis();
                 updateYAxis(yMin, yMax);
-
-                // g.select('g.lines1Wrap.nvd3-svg')
-                //     .transition()
-                //     .duration(duration)
-                //     .call(lines1)
-                // ;
 
                 // g.select('g.lines2Wrap.nvd3-svg')
                 //     .transition()
@@ -9540,42 +9507,23 @@ nv.models.multiChart = function() {
             }
 
 
-            //NOTE to be called on brush event in the focus to update the chart
-            //NOTE this was called using g.select('.nv-focus .nv-x.nvaxis'), it seemed to get the same data from both
-            //      the x and y calls of this though
+            // Called on brush event in the focus
             function updateXAxis() {
-                // console.dir(x.domain())
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
-                // console.dir(x.domain())
                 g.select("line").attr("d", resizePath);
                 g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
-
-                // g.select('g.nv-x.nv-axis.nvd3-svg')     //NOTE this was once 'g.nv-focus'
-                //     .transition()
-                //     .duration(duration)
-                //     .call(xAxis)
-                // ;
             }
 
-            //NOTE to be called on brush event in the focus to update the chart
-            //NOTE see above notes on updateXAxis
+            // Called on brush event in the focus, updates axis and calls lines
             function updateYAxis(yMin, yMax) {
-console.log(brush.extent())
-                if (brush.extent()[0] !== 0) {
-                    yAxis1.domain([yMin, yMax]);
-                }
+
+                yAxis1.domain(brush.empty() ? y.domain() : [yMin, yMax]);
+
                 g.select("line").attr("d", resizePath);
-                g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(0).call(yAxis1);
+                g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis1);
 
                 lines1.yDomain(yAxis1.domain());
                 g.select('g.lines1Wrap.nvd3-svg').transition().duration(duration).call(lines1);
-                
-
-                // g.select('g.nv-y1.nv-axis.nvd3-svg')    //NOTE this was once 'g.nv-focus'
-                //     .transition()
-                //     .duration(duration)
-                //     .call(yAxis1)
-                // ;
 
                 // NOTE not being used right now
                 // g.select('g.nv-y2.nv-axis.nvd3-svg')
@@ -9584,8 +9532,6 @@ console.log(brush.extent())
                 //     .call(yAxis2)
                 // ;
             }
-
-
 
             function mouseover_line(evt) {
                 var yaxis = data[evt.seriesIndex].yAxis === 2 ? yAxis2 : yAxis1;
