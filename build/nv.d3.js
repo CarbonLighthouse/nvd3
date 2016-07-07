@@ -9042,9 +9042,12 @@ nv.models.multiChart = function() {
         legendRightAxisHint = ' (right axis)',
         brushExtent = null,
         duration = 250,
-        yMin,
-        yMax,
-        dataInBrushedX = []
+        yMin1,
+        yMax1,
+        yMin2,
+        yMax2,
+        dataInBrushedY1 = [], //yAxis1 brushed data
+        dataInBrushedY2 = []  //yAxis2 brushed data
         ;
 
     //============================================================
@@ -9158,9 +9161,9 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'nv-interactive');
 
             //NOTE we'll likely have to rethink the size, this is just for testing
-            var svg = d3.select('body div#chart1 ')
+            var svg = d3.select('body div')
                         .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        .attr('id', 'contextBar')
+                        .style({'height': '70px'})
                         .attr('width', availableWidth)
                         .attr('height', availableHeight2 + margin2.top + margin2.bottom);
 
@@ -9178,9 +9181,7 @@ nv.models.multiChart = function() {
             //                 .attr('class', 'nv-focus')
             //                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
                         // ;
-
-            d3.select('svg#contextBar')
-                .style({'height': '70px'})
+                
 
             //NOTE
             var context = svg.append('g')
@@ -9188,26 +9189,6 @@ nv.models.multiChart = function() {
                             .attr('height', availableHeight2)
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
-
-            // //NOTE
-            // focus.append('path') 
-            //     .datum(series1)   
-            //     .attr('class', 'line')     //NOTE 
-            //     .attr('d', line);    //NOTE probably going to transition to resizePath
-            
-            // focus.append('g')
-            //     .attr('class', 'nv-x nv-axis')
-            //     .attr('transform', 'translate(0,' + availableHeight2 + ')')
-            //     .call(xAxis);
-
-            // focus.append('g').attr('class', 'nv-y nv-axis').call(y2);
-            // focus.append('g').attr('class', 'nv-background').append('rect');
-            // focus.append('g').attr('class', 'lines1Wrap');
-
-            // context.append('path')
-            //     .datum(series2) 
-            //     .attr('class', 'line')     //NOTE should
-            //     .attr('d', line2);         //NOTE probably going to transition to resizePath
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
@@ -9405,6 +9386,7 @@ nv.models.multiChart = function() {
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
+                d3.select('div#chart1 svg:nth-child(4)').remove();
             });
 
             if(useInteractiveGuideline){
@@ -9413,7 +9395,7 @@ nv.models.multiChart = function() {
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x); 
+                    .xScale(xAxis.scale()); //NOTE this was xScale(x)
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
 
@@ -9442,9 +9424,6 @@ nv.models.multiChart = function() {
             }
 
             function onBrush() {
-                
-                // focus.select("g.nv-y.nv-axis.nvd3-svg").call(yAxis1);
-                // focus.select("g.nv-y2.nv-axis.nvd3-svg").call(yAxis2);
 
                 var extent = brush.empty() ? x2.domain() : brush.extent();
 
@@ -9452,41 +9431,77 @@ nv.models.multiChart = function() {
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
                     return;
                 }
-     
+
                 // dispatch.brush({extent: extent, brush: brush});
     
                 // updateBrushBG();
 
                 xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
-                lines1.xDomain(xAxis.domain());
-                // lines2.xDomain(xAxis.domain());
 
-                dataInBrushedX = []
+                lines1.xDomain(xAxis.domain());
+                scatters1.xDomain(xAxis.domain());
+                lines2.xDomain(xAxis.domain());
+                scatters2.xDomain(xAxis.domain());
+
+                dataInBrushedY1 = []
+                dataInBrushedY2 = []
+
                 //y values based off brushed x values
                 data.forEach(function(d, i) { 
-                    d.values.forEach(function(x, y) {
-                        if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
-                            dataInBrushedX.push(x);
-                        }
-                    })
+                    if (d.yAxis === 1) {
+                        d.values.forEach(function(x, y) {
+                            if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
+                                dataInBrushedY1.push(x);
+                            }
+                        })
+                    } else if (d.yAxis === 2) {
+                        d.values.forEach(function(x, y) {
+                            if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
+                                dataInBrushedY2.push(x);
+                            }  
+                        })
+                    }
                 });
 
-                yMin = Math.min.apply(null, dataInBrushedX.map(function(i) {
-                    return i.y;
-                }));
-                yMax = Math.max.apply(null, dataInBrushedX.map(function(i) {
-                    return i.y;
-                }));
-                
+                yMin1 = Math.min.apply(null, dataInBrushedY1.map(function(i) { return i.y; }));
+                yMax1 = Math.max.apply(null, dataInBrushedY1.map(function(i) { return i.y; }));
+                yMin2 = Math.min.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
+                yMax2 = Math.max.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
+
                 // Update Main (Focus) Axes
                 updateXAxis();
-                updateYAxis(yMin, yMax);
+                updateYAxis();
 
-                // g.select('g.lines2Wrap.nvd3-svg')
-                //     .transition()
-                //     .duration(duration)
-                //     .call(lines2)
-                // ;
+                lines1.yDomain(yAxis1.domain());
+                scatters1.yDomain(yAxis1.domain());
+                lines2.yDomain(yAxis2.domain());
+                scatters2.yDomain(yAxis2.domain());
+
+                lines1.clipEdge(true);
+                lines2.clipEdge(true);
+                // g.select('g.lines1Wrap.nvd3-svg').transition().duration(duration).call(lines1);
+                // g.select('g.scatters1Wrap.nvd3-svg').transition().duration(duration).call(scatters1);
+
+                d3.transition(lines1Wrap).call(lines1);
+                d3.transition(scatters1Wrap).call(scatters1);
+
+                // g.select('g.lines2Wrap.nvd3-svg').transition().duration(duration).call(lines2);
+                // g.select('g.scatters2Wrap.nvd3-svg').transition().duration(duration).call(scatters2);
+                d3.transition(lines2Wrap).call(lines2);
+                d3.transition(scatters1Wrap).call(scatters1);
+
+
+                g.select('.legendWrap')
+                    .datum(data.map(function(series) {
+                        series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
+                        series.key = series.originalKey + (series.yAxis == 1 ? '' : legendRightAxisHint);
+                        // console.log(series)
+                        // series.values.filter(function(i) {
+                        //     i.x >= brush.extent()[0] && i.x <= brush.extent()[1];
+                        // });
+                        return series
+                    }))
+                    .call(legend);
 
             }
 
@@ -9515,22 +9530,15 @@ nv.models.multiChart = function() {
             }
 
             // Called on brush event in the focus, updates axis and calls lines
-            function updateYAxis(yMin, yMax) {
+            function updateYAxis() {
 
-                yAxis1.domain(brush.empty() ? y.domain() : [yMin, yMax]);
+                yAxis1.domain(brush.empty() ? y.domain() : [yMin1, yMax1]);
+                yAxis2.domain(brush.empty() ? y2.domain() : [yMin2, yMax2]);
 
                 g.select("line").attr("d", resizePath);
+                g.select("scatters").attr("d", resizePath);
                 g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis1);
-
-                lines1.yDomain(yAxis1.domain());
-                g.select('g.lines1Wrap.nvd3-svg').transition().duration(duration).call(lines1);
-
-                // NOTE not being used right now
-                // g.select('g.nv-y2.nv-axis.nvd3-svg')
-                //     .transition()
-                //     .duration(duration)
-                //     .call(yAxis2)
-                // ;
+                g.select("g.nv-y2.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis2);
             }
 
             function mouseover_line(evt) {
@@ -9630,7 +9638,7 @@ nv.models.multiChart = function() {
                         return !series.disabled;
                     })
                     .forEach(function(series,i) {
-                        var extent = x.domain();
+                        var extent = brush.empty() ? x2.domain() : brush.extent();
                         var currentValues = series.values.filter(function(d,i) {
                             return chart.x()(d,i) >= extent[0] && chart.x()(d,i) <= extent[1];
                         });
@@ -9716,7 +9724,6 @@ nv.models.multiChart = function() {
                 });
             }
 
-            onBrush();
         });
 
         return chart;

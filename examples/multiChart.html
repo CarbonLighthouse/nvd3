@@ -17,9 +17,13 @@
         html, body, #chart1, svg {
             margin: 0px;
             padding: 0px;
-            height: 100%;
-            width: 100%;
+            height: 1000px;
+            width: 1000px;
         }
+        .nv-y2 line {
+            display:none;
+        }
+
     </style>
 </head>
 <body class='with-3d-shadow with-transitions'>
@@ -29,7 +33,7 @@
 </div>
 
 <script>
-
+        // first argurment in stream_layers is the length of testdata
     var testdata = stream_layers(9,10+Math.random()*100,.1).map(function(data, i) {
         return {
             key: 'Stream' + i,
@@ -43,17 +47,17 @@
     testdata[2].type = "line";
     testdata[2].yAxis = 1;
     testdata[3].type = "line";
-    testdata[3].yAxis = 1;
+    testdata[3].yAxis = 2;
     testdata[4].type = "line";
-    testdata[4].yAxis = 1;
+    testdata[4].yAxis = 2;
     testdata[5].type = "line";
-    testdata[5].yAxis = 1;
+    testdata[5].yAxis = 2;
     testdata[6].type = "line";
-    testdata[6].yAxis = 1;
+    testdata[6].yAxis = 2;
     testdata[7].type = "line";
-    testdata[7].yAxis = 1;
+    testdata[7].yAxis = 2;
     testdata[8].type = "line";
-    testdata[8].yAxis = 1;
+    testdata[8].yAxis = 2;
 
 
 
@@ -61,11 +65,12 @@
         var chart = nv.models.multiChart()
             .margin({top: 30, right: 60, bottom: 50, left: 70})
             .color(d3.scale.category10().range())
-            .useInteractiveGuideline(true);
+            .useInteractiveGuideline(true)
+            .showLegend(true);
 
         chart.xAxis.tickFormat(d3.format(',f'));
-        chart.yAxis1.tickFormat(d3.format(',.1f'));
-        chart.yAxis2.tickFormat(d3.format(',.1f'));
+        chart.yAxis1.tickFormat(d3.format(',.2f'));
+        chart.yAxis2.tickFormat(d3.format(',.2f'));
 
         d3.select('#chart1 svg')
             .datum(testdata)
