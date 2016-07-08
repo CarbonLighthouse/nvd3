@@ -9145,8 +9145,9 @@ nv.models.multiChart = function() {
             var g = wrap.select('g');
 
             gEnter.append('g').attr('class', 'nv-focus');
- 
-            focus = gEnter.append('g').attr('class', 'nv-x nv-axis');
+            gEnter.append('g').attr('class', 'nv-background').append('rect');
+
+            gEnter.append('g').attr('class', 'nv-x nv-axis');
             gEnter.append('g').attr('class', 'nv-y1 nv-axis');
             gEnter.append('g').attr('class', 'nv-y2 nv-axis');
             gEnter.append('g').attr('class', 'stack1Wrap');
@@ -9204,37 +9205,45 @@ nv.models.multiChart = function() {
               .attr('y', -6)
               .attr('height', availableHeight2 + 7);
 
-            // context.append('g').attr('class', 'nv-background');
-            // context.append('g').attr('class', 'nv-brushBackground');
-            // context.append('g').attr('class', 'lines1Wrap');
+              //START HERE
+            context.append('g').attr('class', 'nv-background').append('rect');
+            context.append('g').attr('class', 'nv-brushBackground');
+            context.append('g').attr('class', 'lines1Wrap');
 
-
-            //NOTE the select here doesn't seem to cause an issue
-            var brushBG = g/*.select('.nv-brushBackground')*/.selectAll('g')
-                    .data([brushExtent || brush.extent()]);
-
-            // var brushBGenter = brushBG.enter()
-            //         .append('g');
-
-            // brushBGenter.append('rect')
-            //     .attr('class', 'left')
-            //     .attr('x', 0)
-            //     .attr('y', 0)
-            //     .attr('height', availableHeight2)
-            // ;
-
-            // var gBrush = g.select('.nv-x.nv-brush')
-            //     .call(brush);
-            // gBrush.selectAll('rect')
-            //     .attr('height', availableHeight2);
-            // gBrush.selectAll('.resize').append('path').attr('d', resizePath);
-
-            // g.select('.nv-context .nv-background rect')
+            // context.select('g.nv-background rect')
             //     .attr('width', availableWidth)
             //     .attr('height', availableHeight2);
 
-            // g.select('.nv-context .nv-x.nv-axis')
-            //     .attr('transform', 'translate(0,' + y2.range()[0] + ')');
+//SKIP --- HERE only the select was commented
+            //NOTE the select here doesn't seem to cause an issue
+            var brushBG = g.select('.nv-brushBackground').selectAll('g')
+                    .data([brushExtent || brush.extent()]).call(lines1);
+
+            var brushBGenter = brushBG.enter()
+                    .append('g');
+//SKIP DOWN TO HERE
+            var brushBG = context.select('g.nv-x.brush').append('g').attr('class', 'nv-background');
+
+            brushBGenter.append('rect')
+                .attr('class', 'left')
+                .attr('x', 0)
+                .attr('y', 0)
+                .attr('height', availableHeight2)
+            ;
+
+            var gBrush = g.select('.nv-x.nv-brush')
+                .call(brush);
+            gBrush.selectAll('rect')
+                .attr('height', availableHeight2);
+            gBrush.selectAll('.resize').append('path').attr('d', resizePath);
+
+            g.select('.nv-context .nv-background rect')
+                .attr('width', availableWidth)
+                .attr('height', availableHeight2);
+
+            g.select('.nv-context .nv-x.nv-axis')
+                .attr('transform', 'translate(0,' + y2.range()[0] + ')');
+            //END HERE
 
 
             var color_array = data.map(function(d,i) {
@@ -9395,7 +9404,7 @@ nv.models.multiChart = function() {
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(xAxis.scale()); //NOTE this was xScale(x)
+                    .xScale(x); //NOTE this was xScale(x)
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
 
@@ -9431,7 +9440,6 @@ nv.models.multiChart = function() {
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
                     return;
                 }
-
                 // dispatch.brush({extent: extent, brush: brush});
     
                 // updateBrushBG();
@@ -9472,6 +9480,9 @@ nv.models.multiChart = function() {
                 updateXAxis();
                 updateYAxis();
 
+                lines1.xScale(xAxis.scale())
+                lines2.xScale(xAxis.scale())
+
                 lines1.yDomain(yAxis1.domain());
                 scatters1.yDomain(yAxis1.domain());
                 lines2.yDomain(yAxis2.domain());
@@ -9491,17 +9502,27 @@ nv.models.multiChart = function() {
                 d3.transition(scatters1Wrap).call(scatters1);
 
 
-                g.select('.legendWrap')
-                    .datum(data.map(function(series) {
-                        series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
-                        series.key = series.originalKey + (series.yAxis == 1 ? '' : legendRightAxisHint);
-                        // console.log(series)
-                        // series.values.filter(function(i) {
-                        //     i.x >= brush.extent()[0] && i.x <= brush.extent()[1];
-                        // });
-                        return series
-                    }))
-                    .call(legend);
+                // g.select('.legendWrap')
+                //     .datum(data.map(function(series) {
+                //         series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
+                //         series.key = series.originalKey + (series.yAxis == 1 ? '' : legendRightAxisHint);
+                //         // console.log(series)
+                //         // series.values.filter(function(i) {
+                //         //     i.x >= brush.extent()[0] && i.x <= brush.extent()[1];
+                //         // });
+                //         return series
+                //     }))
+                //     .call(legend);
+
+                if(useInteractiveGuideline){
+                    interactiveLayer
+                        .width(availableWidth)
+                        .height(availableHeight)
+                        // .margin({left:margin.left, top:margin.top})
+                        .svgContainer(container)
+                        .xScale(lines2.xScale()); //NOTE this was xScale(x)
+                    wrap.select(".nv-interactive").call(interactiveLayer);
+                }
 
             }
 
