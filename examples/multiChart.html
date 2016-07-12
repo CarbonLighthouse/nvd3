@@ -40,17 +40,17 @@
             values: data.map(function(a){a.y = a.y * (i <= 1 ? -1 : 1); return a})
         };
     });
-    testdata[0].type = "scatter";
+    testdata[0].type = "line";
     testdata[0].yAxis = 1;
-    testdata[1].type = "scatter";
+    testdata[1].type = "line";
     testdata[1].yAxis = 1;
-    testdata[2].type = "scatter";
+    testdata[2].type = "line";
     testdata[2].yAxis = 1;
-    testdata[3].type = "scatter";
+    testdata[3].type = "line";
     testdata[3].yAxis = 2;
-    testdata[4].type = "scatter";
+    testdata[4].type = "line";
     testdata[4].yAxis = 2;
-    testdata[5].type = "scatter";
+    testdata[5].type = "line";
     testdata[5].yAxis = 2;
     // testdata[6].type = "line";
     // testdata[6].yAxis = 2;
@@ -62,10 +62,10 @@
 
 
     nv.addGraph(function() {
-        var chart = nv.models.multiChart()
+        var chart = nv.models.multiChartWithFocus()
             .margin({top: 30, right: 60, bottom: 50, left: 70})
             .color(d3.scale.category10().range())
-            .useInteractiveGuideline(false)
+            .useInteractiveGuideline(true)
             .showLegend(true);
 
         chart.xAxis.tickFormat(d3.format(',f'));

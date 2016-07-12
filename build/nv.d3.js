@@ -9764,11 +9764,14 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var svg = d3.select('body div')
+            var svg = d3.select('.nv-wrap.nvd3.nv-multiChart')
                         .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        .style({'height': '70px'})
+                        // .style({'height': availableHeight2 + margin2.top + margin2.bottom})
+                        // .attr('display', 'initial') 
                         .attr('width', availableWidth)
-                        .attr('height', availableHeight2 + margin2.top + margin2.bottom);
+                        .attr('height', availableHeight2 + margin2.top + margin2.bottom)
+                        .attr('transform', 'translate(' + availableHeight + ',0)')
+                    ;
 
             var context = svg.append('g')
                             .attr('class', 'nv-context')
@@ -9809,51 +9812,51 @@ nv.models.multiChartWithFocus = function() {
             context.select('path.domain')
                 .attr('fill', 'transparent');
 
-            lines3
-                .defined(lines1.defined())
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
+            // lines3
+            //     .defined(lines1.defined())
+            //     .width(availableWidth)
+            //     .height(availableHeight2)
+            //     .color(data.map(function(d,i) {
+            //             return d.color || color(d, i);
+            //     }).filter(function(d,i) { return !data[i].disabled; }));
+            //     g.select('.nv-context')
+            //         .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+            //         // .style('display', 'initial')
+            //     ;
 
-            lines4
-                .defined(lines1.defined())
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
+            // lines4
+            //     .defined(lines1.defined())
+            //     .width(availableWidth)
+            //     .height(availableHeight2)
+            //     .color(data.map(function(d,i) {
+            //             return d.color || color(d, i);
+            //     }).filter(function(d,i) { return !data[i].disabled; }));
+            //     g.select('.nv-context')
+            //         .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+            //         .style('display', 'initial')
+            //     ;
 
-            scatters3
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
+            // scatters3
+            //     .width(availableWidth)
+            //     .height(availableHeight2)
+            //     .color(data.map(function(d,i) {
+            //             return d.color || color(d, i);
+            //     }).filter(function(d,i) { return !data[i].disabled; }));
+            //     g.select('.nv-context')
+            //         .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+            //         .style('display', 'initial')
+            //     ;
 
-            scatters4
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
+            // scatters4
+            //     .width(availableWidth)
+            //     .height(availableHeight2)
+            //     .color(data.map(function(d,i) {
+            //             return d.color || color(d, i);
+            //     }).filter(function(d,i) { return !data[i].disabled; }));
+            //     g.select('.nv-context')
+            //         .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+            //         .style('display', 'initial')
+            //     ;
 
             var gBrush = g.select('.nv-x.nv-brush').call(brush);
             gBrush.selectAll('rect').attr('height', availableHeight2);
