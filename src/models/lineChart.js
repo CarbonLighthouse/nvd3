@@ -286,12 +286,22 @@ nv.models.lineChart = function() {
                     .style('display', focusEnable ? 'initial' : 'none')
                 ;
     
+
+
+/****************************************************/
+
                 var contextLinesWrap = g.select('.nv-context .nv-linesWrap')
                     .datum(data.filter(function(d) { return !d.disabled; }))
                     ;
                     
                 d3.transition(contextLinesWrap).call(lines2);
-                
+
+/****************************************************/                
+
+
+
+
+
             
                 // Setup Brush
                 brush
