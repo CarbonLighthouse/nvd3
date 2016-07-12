@@ -9015,7 +9015,10 @@ nv.models.multiBarHorizontalChart = function() {
 
     return chart;
 };
-nv.models.multiChart = function() {
+
+
+
+nv.models.multiChartWithFocus = function() {
     "use strict";
 
     //============================================================
@@ -9028,7 +9031,6 @@ nv.models.multiChart = function() {
         width = null,
         height = null,
         focusHeight = 50,
-        // height2 = null, //NOTE
         showLegend = true,
         noData = null,
         yDomain1,
@@ -9152,10 +9154,10 @@ nv.models.multiChart = function() {
                     })
                 });
     
-            x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
+            x.domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
-            x2  .domain(x.domain()).range([0, availableWidth]);
+            x2.domain(x.domain()).range([0, availableWidth]);
 
             var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
             var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
@@ -9187,20 +9189,6 @@ nv.models.multiChart = function() {
                             .attr('height', availableHeight2)
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
-                        
-            // context.append('g')
-            //   .attr('class', 'nv-y3 nv-axis')
-            //   .attr('height', availableHeight2)
-            //   .attr('transform', 'translate(0,' + availableHeight2 + ')')
-            //   .call(yAxis3)
-            // ;         
-
-            // context.append('g')
-            //   .attr('class', 'nv-y4 nv-axis')
-            //   .attr('height', availableHeight2)
-            //   .attr('transform', 'translate(0,' + availableHeight2 + ')')
-            //   .call(yAxis4)
-            // ;
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
@@ -9227,7 +9215,13 @@ nv.models.multiChart = function() {
             .selectAll('rect')
               .attr('y', -6)
               .attr('height', availableHeight2 + 7)
+              .attr('border', 30)
+              .attr('stroke', 'black')
+              .attr('fill', 'none')
             ;
+
+            context.select('path.domain')
+                .attr('fill', 'transparent');
 
             lines3
                 .defined(lines1.defined())
@@ -9274,8 +9268,6 @@ nv.models.multiChart = function() {
                     .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
                     .style('display', 'initial')
                 ;
-
-
 
             var gBrush = g.select('.nv-x.nv-brush').call(brush);
             gBrush.selectAll('rect').attr('height', availableHeight2);
@@ -9439,11 +9431,11 @@ nv.models.multiChart = function() {
 
             if(dataLines1.length){
                 d3.transition(lines1Wrap).call(lines1);
-                d3.transition(lines3Wrap).call(lines3); //NOTE may need to call lines3
+                d3.transition(lines3Wrap).call(lines3);
             }
             if(dataLines2.length){
                 d3.transition(lines2Wrap).call(lines2);
-                d3.transition(lines4Wrap).call(lines4); //NOTE may need to call lines4
+                d3.transition(lines4Wrap).call(lines4);
             }
 
             if(dataScatters1.length){
@@ -9492,8 +9484,6 @@ nv.models.multiChart = function() {
             d3.transition(g.select('.nv-y4.nv-axis'))
                 .call(yAxis4);
 
-                
-
             g.select('.nv-y1.nv-axis')
                 .classed('nv-disabled', series1.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[0] + ',0)');
@@ -9502,16 +9492,13 @@ nv.models.multiChart = function() {
                 .classed('nv-disabled', series2.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[1] + ',0)');
 
-            // //NOTE this is for the context y1 and y2
             g.select('.nv-y3.nv-axis')
                 .classed('nv-disabled', series1.length ? false : true)
-                .attr('transform', 'translate(' + x.range()[0] + ',0)'); //NOTE x and x2 are the same
+                .attr('transform', 'translate(' + x.range()[0] + ',0)');
 
             g.select('.nv-y4.nv-axis')
                 .classed('nv-disabled', series2.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[1] + ',0)');
-
-
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
@@ -9524,15 +9511,13 @@ nv.models.multiChart = function() {
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x); //NOTE this was xScale(x)
+                    .xScale(x); 
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
 
             // sets a constant value for the original yAxis1 before brush events occur
             y.domain(yAxis1.domain());  
             y2.domain(yAxis2.domain());
-            y3.domain(yAxis3.domain());
-            y4.domain(yAxis4.domain());
 
             //============================================================
             // Event Handling/Dispatching
@@ -9560,14 +9545,9 @@ nv.models.multiChart = function() {
 
                 //The brush extent cannot be less than one.  If it is, don't update the line chart.
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
-                    //Fixes a bug that was calling .x() on undefined
                     brush.extent([0, 0])
                     return;
                 }
-
-                // dispatch.brush({extent: extent, brush: brush});
-    
-                // updateBrushBG();
 
                 xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
 
@@ -9607,6 +9587,8 @@ nv.models.multiChart = function() {
 
                 lines1.xScale(xAxis.scale());
                 lines2.xScale(xAxis.scale());
+                scatters1.xScale(xAxis.scale());
+                scatters2.xScale(xAxis.scale());
 
                 lines1.yDomain(yAxis1.domain());
                 scatters1.yDomain(yAxis1.domain());
@@ -9615,14 +9597,10 @@ nv.models.multiChart = function() {
 
                 lines1.clipEdge(true);
                 lines2.clipEdge(true);
-                // g.select('g.lines1Wrap.nvd3-svg').transition().duration(duration).call(lines1);
-                // g.select('g.scatters1Wrap.nvd3-svg').transition().duration(duration).call(scatters1);
 
                 d3.transition(lines1Wrap).call(lines1);
                 d3.transition(scatters1Wrap).call(scatters1);
 
-                // g.select('g.lines2Wrap.nvd3-svg').transition().duration(duration).call(lines2);
-                // g.select('g.scatters2Wrap.nvd3-svg').transition().duration(duration).call(scatters2);
                 d3.transition(lines2Wrap).call(lines2);
                 d3.transition(scatters2Wrap).call(scatters2);
 
@@ -9632,30 +9610,12 @@ nv.models.multiChart = function() {
                         .height(availableHeight)
                         // .margin({left:margin.left, top:margin.top})
                         .svgContainer(container)
-                        .xScale(lines2.xScale()); //NOTE this was xScale(x)
+                        .xScale(lines2.xScale());
                     wrap.select(".nv-interactive").call(interactiveLayer);
                 }
 
             }
 
-            function updateBrushBG() {
-                if (!brush.empty()) brush.extent(brushExtent);
-                brushBG
-                    .data([brush.empty() ? x2.domain() : brushExtent])
-                    .each(function(d,i) {
-                        var leftWidth = x2(d[0]) - x.range()[0],
-                            rightWidth = availableWidth - x2(d[1]);
-                        d3.select(this).select('.left')
-                            .attr('width',  leftWidth < 0 ? 0 : leftWidth);
-    
-                        d3.select(this).select('.right')
-                            .attr('x', x2(d[1]))
-                            .attr('width', rightWidth < 0 ? 0 : rightWidth);
-                    });
-            }
-
-
-            // Called on brush event in the focus
             function updateXAxis() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
                 g.select("line").attr("d", resizePath);
@@ -9663,9 +9623,7 @@ nv.models.multiChart = function() {
                 g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
             }
 
-            // Called on brush event in the focus, updates axis and calls lines
             function updateYAxis() {
-
                 yAxis1.domain(brush.empty() ? y.domain() : [yMin1, yMax1]);
                 yAxis2.domain(brush.empty() ? y2.domain() : [yMin2, yMax2]);
 
