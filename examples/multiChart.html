@@ -34,29 +34,29 @@
 
 <script>
         // first argurment in stream_layers is the length of testdata
-    var testdata = stream_layers(9,10+Math.random()*100,.1).map(function(data, i) {
+    var testdata = stream_layers(9,10+Math.random()*1000,.1).map(function(data, i) {
         return {
             key: 'Stream' + i,
             values: data.map(function(a){a.y = a.y * (i <= 1 ? -1 : 1); return a})
         };
     });
-    testdata[0].type = "line";
+    testdata[0].type = "scatter";
     testdata[0].yAxis = 1;
-    testdata[1].type = "line";
+    testdata[1].type = "scatter";
     testdata[1].yAxis = 1;
-    testdata[2].type = "line";
+    testdata[2].type = "scatter";
     testdata[2].yAxis = 1;
-    testdata[3].type = "line";
+    testdata[3].type = "scatter";
     testdata[3].yAxis = 2;
-    testdata[4].type = "line";
+    testdata[4].type = "scatter";
     testdata[4].yAxis = 2;
-    testdata[5].type = "line";
+    testdata[5].type = "scatter";
     testdata[5].yAxis = 2;
-    testdata[6].type = "line";
+    testdata[6].type = "scatter";
     testdata[6].yAxis = 2;
-    testdata[7].type = "line";
+    testdata[7].type = "scatter";
     testdata[7].yAxis = 2;
-    testdata[8].type = "line";
+    testdata[8].type = "scatter";
     testdata[8].yAxis = 2;
 
 

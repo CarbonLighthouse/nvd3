@@ -9070,6 +9070,8 @@ nv.models.multiChart = function() {
 
         scatters1 = nv.models.scatter().yScale(yScale1),
         scatters2 = nv.models.scatter().yScale(yScale2),
+        scatters3 = nv.models.scatter().yScale(yScale3),
+        scatters4 = nv.models.scatter().yScale(yScale4),
 
         bars1 = nv.models.multiBar().stacked(false).yScale(yScale1),
         bars2 = nv.models.multiBar().stacked(false).yScale(yScale2),
@@ -9099,7 +9101,7 @@ nv.models.multiChart = function() {
         lines3.pointActive(function(d) { return false; });
 
 
-    var charts = [lines1, lines2, lines3, lines4, scatters1, scatters2, bars1, bars2, stack1, stack2];
+    var charts = [lines1, lines2, lines3, lines4, scatters1, scatters2, scatters3, scatters4, bars1, bars2, stack1, stack2];
 
 
     function chart(selection) {
@@ -9211,6 +9213,8 @@ nv.models.multiChart = function() {
             context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');
             context.append('g').attr('class', 'lines3Wrap');
             context.append('g').attr('class', 'lines4Wrap');
+            context.append('g').attr('class', 'scatters3Wrap');
+            context.append('g').attr('class', 'scatters4Wrap');
             context.append('g').attr('class', 'nv-brushBackground');
             context.append('g').attr('class', 'nv-background')
                 .append('rect')
@@ -9248,6 +9252,29 @@ nv.models.multiChart = function() {
                     .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
                     .style('display', 'initial')
                 ;
+
+            scatters3
+                .width(availableWidth)
+                .height(availableHeight2)
+                .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                }).filter(function(d,i) { return !data[i].disabled; }));
+                g.select('.nv-context')
+                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+                    .style('display', 'initial')
+                ;
+
+            scatters4
+                .width(availableWidth)
+                .height(availableHeight2)
+                .color(data.map(function(d,i) {
+                        return d.color || color(d, i);
+                }).filter(function(d,i) { return !data[i].disabled; }));
+                g.select('.nv-context')
+                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
+                    .style('display', 'initial')
+                ;
+
 
 
             var gBrush = g.select('.nv-x.nv-brush').call(brush);
@@ -9316,6 +9343,14 @@ nv.models.multiChart = function() {
                 .width(availableWidth)
                 .height(availableHeight)
                 .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'scatter'}));
+            scatters3
+                .width(availableWidth)
+                .height(availableHeight2)
+                .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 1 && data[i].type == 'scatter'}));
+            scatters4
+                .width(availableWidth)
+                .height(availableHeight2)
+                .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'scatter'}));
             bars1
                 .width(availableWidth)
                 .height(availableHeight)
@@ -9353,8 +9388,12 @@ nv.models.multiChart = function() {
                 .datum(dataStack2.filter(function(d){return !d.disabled}));
             var lines3Wrap = d3.select('.lines3Wrap')
                 .datum(dataLines1.filter(function(d){return !d.disabled}));
+            var scatters3Wrap = d3.select('.scatters3Wrap')
+                .datum(dataScatters1.filter(function(d){return !d.disabled}));
             var lines4Wrap = d3.select('.lines4Wrap')
                 .datum(dataLines2.filter(function(d){return !d.disabled}));
+            var scatters4Wrap = d3.select('.scatters4Wrap')
+                .datum(dataScatters2.filter(function(d){return !d.disabled}));
 
 
             var extraValue1 = dataStack1.length ? dataStack1.map(function(a){return a.values}).reduce(function(a,b){
@@ -9387,7 +9426,10 @@ nv.models.multiChart = function() {
             stack2.yDomain(yScale2.domain());
 
             lines3.yDomain(yScale3.domain());
+            scatters3.yDomain(yScale3.domain());
+
             lines4.yDomain(yScale4.domain());
+            scatters4.yDomain(yScale4.domain());
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
@@ -9404,8 +9446,14 @@ nv.models.multiChart = function() {
                 d3.transition(lines4Wrap).call(lines4); //NOTE may need to call lines4
             }
 
-            if(dataScatters1.length){d3.transition(scatters1Wrap).call(scatters1);}
-            if(dataScatters2.length){d3.transition(scatters2Wrap).call(scatters2);}
+            if(dataScatters1.length){
+                d3.transition(scatters1Wrap).call(scatters1);
+                d3.transition(scatters3Wrap).call(scatters3);
+            }
+            if(dataScatters2.length){
+                d3.transition(scatters2Wrap).call(scatters2);
+                d3.transition(scatters4Wrap).call(scatters4);
+            }
 
             xAxis
                 ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
@@ -9516,6 +9564,7 @@ nv.models.multiChart = function() {
                     brush.extent([0, 0])
                     return;
                 }
+
                 // dispatch.brush({extent: extent, brush: brush});
     
                 // updateBrushBG();
@@ -9575,19 +9624,7 @@ nv.models.multiChart = function() {
                 // g.select('g.lines2Wrap.nvd3-svg').transition().duration(duration).call(lines2);
                 // g.select('g.scatters2Wrap.nvd3-svg').transition().duration(duration).call(scatters2);
                 d3.transition(lines2Wrap).call(lines2);
-                d3.transition(scatters1Wrap).call(scatters1);
-
-                // g.select('.legendWrap')
-                //     .datum(data.map(function(series) {
-                //         series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
-                //         series.key = series.originalKey + (series.yAxis == 1 ? '' : legendRightAxisHint);
-                //         // console.log(series)
-                //         // series.values.filter(function(i) {
-                //         //     i.x >= brush.extent()[0] && i.x <= brush.extent()[1];
-                //         // });
-                //         return series
-                //     }))
-                //     .call(legend);
+                d3.transition(scatters2Wrap).call(scatters2);
 
                 if(useInteractiveGuideline){
                     interactiveLayer
@@ -9622,6 +9659,7 @@ nv.models.multiChart = function() {
             function updateXAxis() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
                 g.select("line").attr("d", resizePath);
+                g.select("scatters").attr("d", resizePath);
                 g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
             }
 
