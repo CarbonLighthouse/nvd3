@@ -17,13 +17,9 @@
         html, body, #chart1, svg {
             margin: 0px;
             padding: 0px;
-            height: 1000px;
-            width: 1000px;
+            height: 100%;
+            width: 100%;
         }
-        .nv-y2 line {
-            display:none;
-        }
-
     </style>
 </head>
 <body class='with-3d-shadow with-transitions'>
@@ -33,52 +29,42 @@
 </div>
 
 <script>
-        // first argurment in stream_layers is the length of testdata
-    var testdata = stream_layers(6,10+Math.random()*300,.01).map(function(data, i) {
+    var testdata = stream_layers(9,10+Math.random()*100,.1).map(function(data, i) {
         return {
             key: 'Stream' + i,
             values: data.map(function(a){a.y = a.y * (i <= 1 ? -1 : 1); return a})
         };
     });
-    testdata[0].type = "line";
+    testdata[0].type = "area";
     testdata[0].yAxis = 1;
-    testdata[1].type = "line";
+    testdata[1].type = "area";
     testdata[1].yAxis = 1;
     testdata[2].type = "line";
     testdata[2].yAxis = 1;
     testdata[3].type = "line";
     testdata[3].yAxis = 2;
-    testdata[4].type = "line";
-    testdata[4].yAxis = 2;
-    testdata[5].type = "line";
+    testdata[4].type = "scatter";
+    testdata[4].yAxis = 1;
+    testdata[5].type = "scatter";
     testdata[5].yAxis = 2;
-    // testdata[6].type = "line";
-    // testdata[6].yAxis = 2;
-    // testdata[7].type = "line";
-    // testdata[7].yAxis = 2;
-    // testdata[8].type = "line";
-    // testdata[8].yAxis = 2;
-
-
-
+    testdata[6].type = "bar";
+    testdata[6].yAxis = 2;
+    testdata[7].type = "bar";
+    testdata[7].yAxis = 2;
+    testdata[8].type = "bar";
+    testdata[8].yAxis = 2;
     nv.addGraph(function() {
-        var chart = nv.models.multiChartWithFocus()
+        var chart = nv.models.multiChart()
             .margin({top: 30, right: 60, bottom: 50, left: 70})
-            .color(d3.scale.category10().range())
-            .useInteractiveGuideline(true)
-            .showLegend(true);
-
+            .color(d3.scale.category10().range());
         chart.xAxis.tickFormat(d3.format(',f'));
-        chart.yAxis1.tickFormat(d3.format(',.2f'));
-        chart.yAxis2.tickFormat(d3.format(',.2f'));
-
+        chart.yAxis1.tickFormat(d3.format(',.1f'));
+        chart.yAxis2.tickFormat(d3.format(',.1f'));
         d3.select('#chart1 svg')
             .datum(testdata)
             .transition().duration(500).call(chart);
-
         return chart;
     });
-
 </script>
 </body>
 </html>
