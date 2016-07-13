@@ -1,25 +1,35 @@
-nv.models.multiChart = function() {
+nv.models.multiChartWithFocus = function() {
     "use strict";
 
     //============================================================
     // Public Variables with Default Settings
     //------------------------------------------------------------
 
-    var margin = {top: 30, right: 20, bottom: 50, left: 60},
+    var margin = {top: 30, right: 20, bottom: 0, left: 60},
+        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //margin for the context below the graph
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
+        focusHeight = 50,
         showLegend = true,
         noData = null,
         yDomain1,
         yDomain2,
         getX = function(d) { return d.x },
         getY = function(d) { return d.y},
-        interpolate = 'linear',
+        interpolate = 'monotone',
         useVoronoi = true,
         interactiveLayer = nv.interactiveGuideline(),
         useInteractiveGuideline = false,
-        legendRightAxisHint = ' (right axis)'
+        legendRightAxisHint = ' (right axis)',
+        brushExtent = null,
+        duration = 250,
+        yMin1,
+        yMax1,
+        yMin2,
+        yMax2,
+        dataInBrushedY1 = [], //yAxis1 brushed data
+        dataInBrushedY2 = []  //yAxis2 brushed data
         ;
 
     //============================================================
@@ -27,14 +37,23 @@ nv.models.multiChart = function() {
     //------------------------------------------------------------
 
     var x = d3.scale.linear(),
+        x2 = d3.scale.linear(),
+        y3 = nv.models.axis(),
+        y4 = nv.models.axis(),
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
+        yScale3 = d3.scale.linear(),
+        yScale4 = d3.scale.linear(),
 
         lines1 = nv.models.line().yScale(yScale1),
         lines2 = nv.models.line().yScale(yScale2),
+        lines3 = nv.models.line().yScale(yScale3),
+        lines4 = nv.models.line().yScale(yScale4),
 
         scatters1 = nv.models.scatter().yScale(yScale1),
         scatters2 = nv.models.scatter().yScale(yScale2),
+        scatters3 = nv.models.scatter().yScale(yScale3),
+        scatters4 = nv.models.scatter().yScale(yScale4),
 
         bars1 = nv.models.multiBar().stacked(false).yScale(yScale1),
         bars2 = nv.models.multiBar().stacked(false).yScale(yScale2),
@@ -43,14 +62,32 @@ nv.models.multiChart = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),   // Context xAxis, used to update on brush
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
+        yAxis3 = nv.models.axis().scale(yScale3).orient('left'),
+        yAxis4 = nv.models.axis().scale(yScale4).orient('right'),
+
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
-        dispatch = d3.dispatch();
+        dispatch = d3.dispatch('brush')
+        ;
 
-    var charts = [lines1, lines2, scatters1, scatters2, bars1, bars2, stack1, stack2];
+    const y = nv.models.axis();  //holder for initial yaxis1 domain, which will update on brush
+    const y2 = nv.models.axis(); //holder for initial yaxis2 domain, which will update on brush
+    yAxis3.domain(yAxis1.domain());
+    yAxis4.domain(yAxis2.domain());
+
+    lines3.interactive(false);
+    // lines3.pointActive(function(d) { return false; });
+
+    lines4.interactive(false);
+    // lines4.pointActive(function(d) { return false; });
+
+
+    var charts = [lines1, lines2, lines3, lines4, scatters1, scatters2, scatters3, scatters4, bars1, bars2, stack1, stack2];
+
 
     function chart(selection) {
         selection.each(function(data) {
@@ -58,11 +95,16 @@ nv.models.multiChart = function() {
                 that = this;
             nv.utils.initSVG(container);
 
+            var brush = d3.svg.brush()
+                .x(x2)
+                .on("brush", onBrush);
+
             chart.update = function() { container.transition().call(chart); };
             chart.container = this;
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
-                availableHeight = nv.utils.availableHeight(height, container, margin);
+                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
+                availableHeight2 = focusHeight - margin2.top - margin2.bottom;
 
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
@@ -94,13 +136,17 @@ nv.models.multiChart = function() {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-
-            x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x }))
+    
+            x.domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
-            var wrap = container.selectAll('g.wrap.multiChart').data([data]);
-            var gEnter = wrap.enter().append('g').attr('class', 'wrap nvd3 multiChart').append('g');
+            x2.domain(x.domain()).range([0, availableWidth]);
 
+            var wrap = container.selectAll('g.nv-wrap.nv-multiChart').data([data]);
+            var gEnter = wrap.enter().append('g').attr('class', 'nv-wrap nvd3 nv-multiChart').append('g');
+            var g = wrap.select('g');
+
+            gEnter.append('g').attr('class', 'nv-focus');
             gEnter.append('g').attr('class', 'nv-x nv-axis');
             gEnter.append('g').attr('class', 'nv-y1 nv-axis');
             gEnter.append('g').attr('class', 'nv-y2 nv-axis');
@@ -115,16 +161,74 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var g = wrap.select('g');
+            var svg = d3.select(this.parentNode)
+                        .append('svg') //NOTE appending 'svg' is happening each time we use the legend
+                        .attr('width', availableWidth + margin2.left + margin2.right)
+                        .attr('height', availableHeight2 + margin2.top + margin2.bottom)
+                        // .attr('transform', 'translate(' + availableHeight + ',0)')
+                    ;
+
+            var context = svg.append('g')
+                            .attr('class', 'nv-context')
+                            .attr('height', availableHeight2)
+                            .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
+                        ;
+
+            d3.select('svg.nvd3-svg').style({'height':availableHeight + margin.top + margin.bottom})
+
+            context.append('g')
+              .attr('class', 'nv-x nv-axis')
+              .attr('height', availableHeight2)
+              .attr('transform', 'translate(0,' + availableHeight2 + ')')
+              .call(xAxis2)
+            ;
+
+            context.append('g').attr('class', 'nv-y3 nv-axis nvd3-svg');
+            context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');
+            context.append('g').attr('class', 'lines3Wrap');
+            context.append('g').attr('class', 'lines4Wrap');
+            context.append('g').attr('class', 'scatters3Wrap');
+            context.append('g').attr('class', 'scatters4Wrap');
+            context.append('g').attr('class', 'nv-brushBackground');
+            context.append('g').attr('class', 'nv-background')
+                .append('rect')
+                .attr('height', availableHeight2)
+                .attr('width', availableWidth)
+                .style({'fill':'white', 'fill-opacity':'0'})
+            ;
+            context.append('g').attr('class', 'nv-x brush')
+              .call(brush)
+            .selectAll('rect')
+              .attr('y', -6)
+              .attr('height', availableHeight2 + 7)
+              .attr('border', 30)
+              .attr('stroke', 'black')
+              .attr('fill', 'none')
+            ;
+
+            context.select('path.domain')
+                .attr('fill', 'transparent');
+
+            var gBrush = g.select('.nv-x.nv-brush').call(brush);
+            gBrush.selectAll('rect')
+                .attr('height', availableHeight2)
+                .attr('width', availableWidth)
+            ;
+
+            gBrush.selectAll('.resize').append('path').attr('d', resizePath).call(lines1);
+
+            g.select('.nv-context g.nv-background rect')
+                .attr('width', availableWidth)
+                .attr('height', availableHeight2);
+
+            g.select('.nv-context .nv-x.nv-axis')
+                .attr('transform', 'translate(0,' + y2.range()[0] + ')'); 
 
             var color_array = data.map(function(d,i) {
                 return data[i].color || color(d, i);
             });
 
-            // Legend
-            if (!showLegend) {
-                g.select('.legendWrap').selectAll('*').remove();
-            } else {
+            if (showLegend) {
                 var legendWidth = legend.align() ? availableWidth / 2 : availableWidth;
                 var legendXPosition = legend.align() ? legendWidth : 0;
 
@@ -141,13 +245,12 @@ nv.models.multiChart = function() {
 
                 if ( margin.top != legend.height()) {
                     margin.top = legend.height();
-                    availableHeight = nv.utils.availableHeight(height, container, margin);
+                    availableHeight = nv.utils.availableHeight(height, container, margin);  //NOTE should available height 2 be recalculated here?
                 }
 
                 g.select('.legendWrap')
                     .attr('transform', 'translate(' + legendXPosition + ',' + (-margin.top) +')');
             }
-
             lines1
                 .width(availableWidth)
                 .height(availableHeight)
@@ -158,6 +261,16 @@ nv.models.multiChart = function() {
                 .height(availableHeight)
                 .interpolate(interpolate)
                 .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'line'}));
+            lines3
+                .width(availableWidth)
+                .height(availableHeight2)
+                .interpolate(interpolate)
+                .color(color_array.filter(function(d, i) { return !data[i].disabled && data[i].yAxis == 1 && data[i].type == 'line'}));
+            lines4
+                .width(availableWidth)
+                .height(availableHeight2)
+                .interpolate(interpolate)
+                .color(color_array.filter(function(d, i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'line'}));
             scatters1
                 .width(availableWidth)
                 .height(availableHeight)
@@ -165,6 +278,14 @@ nv.models.multiChart = function() {
             scatters2
                 .width(availableWidth)
                 .height(availableHeight)
+                .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'scatter'}));
+            scatters3
+                .width(availableWidth)
+                .height(availableHeight2)
+                .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 1 && data[i].type == 'scatter'}));
+            scatters4
+                .width(availableWidth)
+                .height(availableHeight2)
                 .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'scatter'}));
             bars1
                 .width(availableWidth)
@@ -177,12 +298,10 @@ nv.models.multiChart = function() {
             stack1
                 .width(availableWidth)
                 .height(availableHeight)
-                .interpolate(interpolate)
                 .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 1 && data[i].type == 'area'}));
             stack2
                 .width(availableWidth)
                 .height(availableHeight)
-                .interpolate(interpolate)
                 .color(color_array.filter(function(d,i) { return !data[i].disabled && data[i].yAxis == 2 && data[i].type == 'area'}));
 
             g.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
@@ -203,6 +322,15 @@ nv.models.multiChart = function() {
                 .datum(dataBars2.filter(function(d){return !d.disabled}));
             var stack2Wrap = g.select('.stack2Wrap')
                 .datum(dataStack2.filter(function(d){return !d.disabled}));
+            var lines3Wrap = d3.select('.lines3Wrap')
+                .datum(dataLines1.filter(function(d){return !d.disabled}));
+            var scatters3Wrap = d3.select('.scatters3Wrap')
+                .datum(dataScatters1.filter(function(d){return !d.disabled}));
+            var lines4Wrap = d3.select('.lines4Wrap')
+                .datum(dataLines2.filter(function(d){return !d.disabled}));
+            var scatters4Wrap = d3.select('.scatters4Wrap')
+                .datum(dataScatters2.filter(function(d){return !d.disabled}));
+
 
             var extraValue1 = dataStack1.length ? dataStack1.map(function(a){return a.values}).reduce(function(a,b){
                 return a.map(function(aVal,i){return {x: aVal.x, y: aVal.y + b[i].y}})
@@ -217,6 +345,12 @@ nv.models.multiChart = function() {
             yScale2 .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
+            yScale3 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
+                .range([0, availableHeight]);
+
+            yScale4  .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
+                .range([0, availableHeight]);
+
             lines1.yDomain(yScale1.domain());
             scatters1.yDomain(yScale1.domain());
             bars1.yDomain(yScale1.domain());
@@ -227,17 +361,35 @@ nv.models.multiChart = function() {
             bars2.yDomain(yScale2.domain());
             stack2.yDomain(yScale2.domain());
 
+            lines3.yDomain(yScale3.domain());
+            scatters3.yDomain(yScale3.domain());
+
+            lines4.yDomain(yScale4.domain());
+            scatters4.yDomain(yScale4.domain());
+
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
 
             if(dataBars1.length){d3.transition(bars1Wrap).call(bars1);}
             if(dataBars2.length){d3.transition(bars2Wrap).call(bars2);}
 
-            if(dataLines1.length){d3.transition(lines1Wrap).call(lines1);}
-            if(dataLines2.length){d3.transition(lines2Wrap).call(lines2);}
+            if(dataLines1.length){
+                d3.transition(lines1Wrap).call(lines1);
+                d3.transition(lines3Wrap).call(lines3);
+            }
+            if(dataLines2.length){
+                d3.transition(lines2Wrap).call(lines2);
+                d3.transition(lines4Wrap).call(lines4);
+            }
 
-            if(dataScatters1.length){d3.transition(scatters1Wrap).call(scatters1);}
-            if(dataScatters2.length){d3.transition(scatters2Wrap).call(scatters2);}
+            if(dataScatters1.length){
+                d3.transition(scatters1Wrap).call(scatters1);
+                d3.transition(scatters3Wrap).call(scatters3);
+            }
+            if(dataScatters2.length){
+                d3.transition(scatters2Wrap).call(scatters2);
+                d3.transition(scatters4Wrap).call(scatters4);
+            }
 
             xAxis
                 ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
@@ -252,7 +404,6 @@ nv.models.multiChart = function() {
                 ._ticks( nv.utils.calcTicksY(availableHeight/36, data) )
                 .tickSize( -availableWidth, 0);
 
-
             d3.transition(g.select('.nv-y1.nv-axis'))
                 .call(yAxis1);
 
@@ -263,6 +414,20 @@ nv.models.multiChart = function() {
             d3.transition(g.select('.nv-y2.nv-axis'))
                 .call(yAxis2);
 
+            yAxis3
+                ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
+                .tickSize( -availableWidth, 0);
+            
+            d3.transition(g.select('.nv-y3.nv-axis'))
+                .call(yAxis3);
+
+            yAxis4
+                ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
+                .tickSize( -availableWidth, 0);
+            
+            d3.transition(g.select('.nv-y4.nv-axis'))
+                .call(yAxis4);
+
             g.select('.nv-y1.nv-axis')
                 .classed('nv-disabled', series1.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[0] + ',0)');
@@ -271,8 +436,19 @@ nv.models.multiChart = function() {
                 .classed('nv-disabled', series2.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[1] + ',0)');
 
+            g.select('.nv-y3.nv-axis')
+                .classed('nv-disabled', series1.length ? false : true)
+                .attr('transform', 'translate(' + x.range()[0] + ',0)');
+
+            g.select('.nv-y4.nv-axis')
+                .classed('nv-disabled', series2.length ? false : true)
+                .attr('transform', 'translate(' + x.range()[1] + ',0)');
+
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
+
+                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
+                d3.select(wrapper).select('svg:nth-child(3)').remove();
             });
 
             if(useInteractiveGuideline){
@@ -281,13 +457,129 @@ nv.models.multiChart = function() {
                     .height(availableHeight)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x);
+                    .xScale(x); 
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
+
+            // sets a constant value for the original yAxis1 before brush events occur
+            y.domain(yAxis1.domain());  
+            y2.domain(yAxis2.domain());
 
             //============================================================
             // Event Handling/Dispatching
             //------------------------------------------------------------
+
+            // Taken from crossfilter (http://square.github.com/crossfilter/)
+            function resizePath(d) {
+                var e = +(d == 'e'),
+                    x = e ? 1 : -1,
+                    y = availableHeight2 / 3;
+                return 'M' + (0.5 * x) + ',' + y
+                    + 'A6,6 0 0 ' + e + ' ' + (6.5 * x) + ',' + (y + 6)
+                    + 'V' + (2 * y - 6)
+                    + 'A6,6 0 0 ' + e + ' ' + (0.5 * x) + ',' + (2 * y)
+                    + 'Z'
+                    + 'M' + (2.5 * x) + ',' + (y + 8)
+                    + 'V' + (2 * y - 8)
+                    + 'M' + (4.5 * x) + ',' + (y + 8)
+                    + 'V' + (2 * y - 8);
+            }
+
+            function onBrush() {
+
+                var extent = brush.empty() ? x2.domain() : brush.extent();
+
+                //The brush extent cannot be less than one.  If it is, don't update the line chart.
+                if (Math.abs(extent[0] - extent[1]) <= 1) {
+                    brush.extent([0, 0])
+                    return;
+                }
+
+                xAxis.domain([extent[0], extent[1]]);
+
+                lines1.xDomain(xAxis.domain());
+                scatters1.xDomain(xAxis.domain());
+                lines2.xDomain(xAxis.domain());
+                scatters2.xDomain(xAxis.domain());
+
+                dataInBrushedY1 = []
+                dataInBrushedY2 = []
+
+                //y values based off brushed x values
+                data.forEach(function(d, i) { 
+                    if (d.yAxis === 1) {
+                        d.values.forEach(function(x, y) {
+                            if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
+                                dataInBrushedY1.push(x);
+                            }
+                        })
+                    } else if (d.yAxis === 2) {
+                        d.values.forEach(function(x, y) {
+                            if (x.x >= brush.extent()[0] && x.x <= brush.extent()[1]) {
+                                dataInBrushedY2.push(x);
+                            }  
+                        })
+                    }
+                });
+
+                yMin1 = Math.min.apply(null, dataInBrushedY1.map(function(i) { return i.y; }));
+                yMax1 = Math.max.apply(null, dataInBrushedY1.map(function(i) { return i.y; }));
+                yMin2 = Math.min.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
+                yMax2 = Math.max.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
+
+                // Update Main (Focus) Axes
+                updateXAxis();
+                updateYAxis();
+
+                lines1.xScale(xAxis.scale());
+                lines2.xScale(xAxis.scale());
+                scatters1.xScale(xAxis.scale());
+                scatters2.xScale(xAxis.scale());
+
+                lines1.yDomain(yAxis1.domain());
+                scatters1.yDomain(yAxis1.domain());
+                lines2.yDomain(yAxis2.domain());
+                scatters2.yDomain(yAxis2.domain());
+
+                lines1.clipEdge(true);
+                lines2.clipEdge(true);
+                scatters1.clipEdge(true);
+                scatters2.clipEdge(true);
+
+                d3.transition(lines1Wrap).call(lines1);
+                d3.transition(scatters1Wrap).call(scatters1);
+
+                d3.transition(lines2Wrap).call(lines2);
+                d3.transition(scatters2Wrap).call(scatters2);
+
+                if(useInteractiveGuideline){
+                    interactiveLayer
+                        .width(availableWidth)
+                        .height(availableHeight)
+                        // .margin({left:margin.left, top:margin.top})
+                        .svgContainer(container)
+                        .xScale(xAxis.scale());
+                    wrap.select(".nv-interactive").call(interactiveLayer);
+                }
+
+            }
+
+            function updateXAxis() {
+                x.domain(brush.empty() ? x2.domain() : brush.extent());
+                g.select("line").attr("d", resizePath);
+                g.select("scatter").attr("d", resizePath);
+                g.select("g.nv-x.nv-axis.nvd3-svg").transition().duration(duration).call(xAxis);
+            }
+
+            function updateYAxis() {
+                yAxis1.domain(brush.empty() ? y.domain() : [yMin1, yMax1]);
+                yAxis2.domain(brush.empty() ? y2.domain() : [yMin2, yMax2]);
+
+                g.select("line").attr("d", resizePath);
+                g.select("scatter").attr("d", resizePath);
+                g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis1);
+                g.select("g.nv-y2.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis2);
+            }
 
             function mouseover_line(evt) {
                 var yaxis = data[evt.seriesIndex].yAxis === 2 ? yAxis2 : yAxis1;
@@ -299,9 +591,6 @@ nv.models.multiChart = function() {
                 };
                 tooltip
                     .duration(0)
-                    .headerFormatter(function(d, i) {
-                        return xAxis.tickFormat()(d, i);
-                    })
                     .valueFormatter(function(d, i) {
                         return yaxis.tickFormat()(d, i);
                     })
@@ -319,9 +608,6 @@ nv.models.multiChart = function() {
                 };
                 tooltip
                     .duration(100)
-                    .headerFormatter(function(d, i) {
-                        return xAxis.tickFormat()(d, i);
-                    })
                     .valueFormatter(function(d, i) {
                         return yaxis.tickFormat()(d, i);
                     })
@@ -335,9 +621,6 @@ nv.models.multiChart = function() {
                 evt.point['y'] = stack1.y()(evt.point);
                 tooltip
                     .duration(0)
-                    .headerFormatter(function(d, i) {
-                        return xAxis.tickFormat()(d, i);
-                    })
                     .valueFormatter(function(d, i) {
                         return yaxis.tickFormat()(d, i);
                     })
@@ -356,9 +639,6 @@ nv.models.multiChart = function() {
                 };
                 tooltip
                     .duration(0)
-                    .headerFormatter(function(d, i) {
-                        return xAxis.tickFormat()(d, i);
-                    })
                     .valueFormatter(function(d, i) {
                         return yaxis.tickFormat()(d, i);
                     })
@@ -386,6 +666,8 @@ nv.models.multiChart = function() {
               }
             }
 
+
+
             if(useInteractiveGuideline){
                 interactiveLayer.dispatch.on('elementMousemove', function(e) {
                     clearHighlights();
@@ -396,7 +678,7 @@ nv.models.multiChart = function() {
                         return !series.disabled;
                     })
                     .forEach(function(series,i) {
-                        var extent = x.domain();
+                        var extent = brush.empty() ? x2.domain() : brush.extent();
                         var currentValues = series.values.filter(function(d,i) {
                             return chart.x()(d,i) >= extent[0] && chart.x()(d,i) <= extent[1];
                         });
@@ -419,21 +701,17 @@ nv.models.multiChart = function() {
                         });
                     });
 
-                    var defaultValueFormatter = function(d,i) {
-                        var yAxis = allData[i].yAxis;
-                        return d == null ? "N/A" : yAxis.tickFormat()(d);
-                    };
-
                     interactiveLayer.tooltip
-                        .headerFormatter(function(d, i) {
-                            return xAxis.tickFormat()(d, i);
-                        })
-                        .valueFormatter(interactiveLayer.tooltip.valueFormatter() || defaultValueFormatter)
-                        .data({
-                            value: chart.x()( singlePoint,pointIndex ),
-                            index: pointIndex,
-                            series: allData
-                        })();
+                    .chartContainer(chart.container.parentNode)
+                    .valueFormatter(function(d,i) {
+                        var yAxis = allData[i].yAxis;
+                        return d === null ? "N/A" : yAxis.tickFormat()(d);
+                    })
+                    .data({
+                        value: chart.x()( singlePoint,pointIndex ),
+                        index: pointIndex,
+                        series: allData
+                    })();
 
                     interactiveLayer.renderGuideLine(pointXLocation);
                 });
@@ -485,6 +763,7 @@ nv.models.multiChart = function() {
                     tooltip();
                 });
             }
+
         });
 
         return chart;
@@ -498,15 +777,22 @@ nv.models.multiChart = function() {
     chart.legend = legend;
     chart.lines1 = lines1;
     chart.lines2 = lines2;
+    chart.lines3 = lines3;
+    chart.lines4 = lines4;
     chart.scatters1 = scatters1;
     chart.scatters2 = scatters2;
+    chart.scatters3 = scatters3;
+    chart.scatters4 = scatters4;
     chart.bars1 = bars1;
     chart.bars2 = bars2;
     chart.stack1 = stack1;
     chart.stack2 = stack2;
+    chart.xAxis2 = xAxis2;
     chart.xAxis = xAxis;
     chart.yAxis1 = yAxis1;
     chart.yAxis2 = yAxis2;
+    chart.yAxis3 = yAxis3;
+    chart.yAxis4 = yAxis4;
     chart.tooltip = tooltip;
     chart.interactiveLayer = interactiveLayer;
 
@@ -537,6 +823,8 @@ nv.models.multiChart = function() {
             getX = _;
             lines1.x(_);
             lines2.x(_);
+            lines3.x(_);
+            lines4.x(_);
             scatters1.x(_);
             scatters2.x(_);
             bars1.x(_);
@@ -548,6 +836,8 @@ nv.models.multiChart = function() {
             getY = _;
             lines1.y(_);
             lines2.y(_);
+            lines3.y(_);
+            lines4.y(_);
             scatters1.y(_);
             scatters2.y(_);
             stack1.y(_);
