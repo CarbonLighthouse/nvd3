@@ -9764,13 +9764,13 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var svg = d3.select('.nv-wrap.nvd3.nv-multiChart')
+            var svg = d3.select(this.parentNode)
                         .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        // .style({'height': availableHeight2 + margin2.top + margin2.bottom})
+                        .style({'height': availableHeight2 + margin2.top + margin2.bottom})
                         // .attr('display', 'initial') 
-                        .attr('width', availableWidth)
-                        .attr('height', availableHeight2 + margin2.top + margin2.bottom)
-                        .attr('transform', 'translate(' + availableHeight + ',0)')
+                        // .attr('width', availableWidth)
+                        // .attr('height', availableHeight2 + margin2.top + margin2.bottom)
+                        // .attr('transform', 'translate(' + availableHeight + ',0)')
                     ;
 
             var context = svg.append('g')
@@ -10091,7 +10091,9 @@ nv.models.multiChartWithFocus = function() {
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
-                d3.select('div#chart1 svg:nth-child(4)').remove();
+
+                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
+                d3.select(wrapper).select('svg:nth-child(4)').remove();
             });
 
             if(useInteractiveGuideline){
