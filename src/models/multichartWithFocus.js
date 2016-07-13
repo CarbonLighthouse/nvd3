@@ -1,11 +1,11 @@
-nv.models.multiChart = function() {
+nv.models.multiChartWithFocus = function() {
     "use strict";
 
     //============================================================
     // Public Variables with Default Settings
     //------------------------------------------------------------
 
-    var margin = {top: 30, right: 20, bottom: 50, left: 60},
+    var margin = {top: 30, right: 20, bottom: 0, left: 60},
         margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //margin for the context below the graph
         color = nv.utils.defaultColor(),
         width = null,
@@ -74,13 +74,16 @@ nv.models.multiChart = function() {
         dispatch = d3.dispatch('brush')
         ;
 
-        const y = nv.models.axis();  //holder for initial yaxis1 domain, which will update on brush
-        const y2 = nv.models.axis(); //holder for initial yaxis2 domain, which will update on brush
-        yAxis3.domain(yAxis1.domain());
-        yAxis4.domain(yAxis2.domain());
+    const y = nv.models.axis();  //holder for initial yaxis1 domain, which will update on brush
+    const y2 = nv.models.axis(); //holder for initial yaxis2 domain, which will update on brush
+    yAxis3.domain(yAxis1.domain());
+    yAxis4.domain(yAxis2.domain());
 
-        lines3.interactive(false);
-        lines3.pointActive(function(d) { return false; });
+    lines3.interactive(false);
+    // lines3.pointActive(function(d) { return false; });
+
+    lines4.interactive(false);
+    // lines4.pointActive(function(d) { return false; });
 
 
     var charts = [lines1, lines2, lines3, lines4, scatters1, scatters2, scatters3, scatters4, bars1, bars2, stack1, stack2];
@@ -158,17 +161,20 @@ nv.models.multiChart = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var svg = d3.select('body div')
+            var svg = d3.select(this.parentNode)
                         .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        .style({'height': '70px'})
-                        .attr('width', availableWidth)
-                        .attr('height', availableHeight2 + margin2.top + margin2.bottom);
+                        .attr('width', availableWidth + margin2.left + margin2.right)
+                        .attr('height', availableHeight2 + margin2.top + margin2.bottom)
+                        // .attr('transform', 'translate(' + availableHeight + ',0)')
+                    ;
 
             var context = svg.append('g')
                             .attr('class', 'nv-context')
                             .attr('height', availableHeight2)
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
+
+            d3.select('svg.nvd3-svg').style({'height':availableHeight + margin.top + margin.bottom})
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
@@ -203,54 +209,12 @@ nv.models.multiChart = function() {
             context.select('path.domain')
                 .attr('fill', 'transparent');
 
-            lines3
-                .defined(lines1.defined())
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
-
-            lines4
-                .defined(lines1.defined())
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
-
-            scatters3
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
-
-            scatters4
-                .width(availableWidth)
-                .height(availableHeight2)
-                .color(data.map(function(d,i) {
-                        return d.color || color(d, i);
-                }).filter(function(d,i) { return !data[i].disabled; }));
-                g.select('.nv-context')
-                    .attr('transform', 'translate(0,' + ( availableHeight + margin.bottom + margin2.top) + ')')
-                    .style('display', 'initial')
-                ;
-
             var gBrush = g.select('.nv-x.nv-brush').call(brush);
-            gBrush.selectAll('rect').attr('height', availableHeight2);
+            gBrush.selectAll('rect')
+                .attr('height', availableHeight2)
+                .attr('width', availableWidth)
+            ;
+
             gBrush.selectAll('.resize').append('path').attr('d', resizePath).call(lines1);
 
             g.select('.nv-context g.nv-background rect')
@@ -482,7 +446,9 @@ nv.models.multiChart = function() {
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
-                d3.select('div#chart1 svg:nth-child(4)').remove();
+
+                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
+                d3.select(wrapper).select('svg:nth-child(3)').remove();
             });
 
             if(useInteractiveGuideline){
@@ -529,7 +495,7 @@ nv.models.multiChart = function() {
                     return;
                 }
 
-                xAxis.domain([Math.ceil(extent[0]), Math.floor(extent[1])]);
+                xAxis.domain([extent[0], extent[1]]);
 
                 lines1.xDomain(xAxis.domain());
                 scatters1.xDomain(xAxis.domain());
@@ -577,6 +543,8 @@ nv.models.multiChart = function() {
 
                 lines1.clipEdge(true);
                 lines2.clipEdge(true);
+                scatters1.clipEdge(true);
+                scatters2.clipEdge(true);
 
                 d3.transition(lines1Wrap).call(lines1);
                 d3.transition(scatters1Wrap).call(scatters1);
@@ -590,7 +558,7 @@ nv.models.multiChart = function() {
                         .height(availableHeight)
                         // .margin({left:margin.left, top:margin.top})
                         .svgContainer(container)
-                        .xScale(lines2.xScale());
+                        .xScale(xAxis.scale());
                     wrap.select(".nv-interactive").call(interactiveLayer);
                 }
 
@@ -599,8 +567,8 @@ nv.models.multiChart = function() {
             function updateXAxis() {
                 x.domain(brush.empty() ? x2.domain() : brush.extent());
                 g.select("line").attr("d", resizePath);
-                g.select("scatters").attr("d", resizePath);
-                g.select("g.nv-x.nv-axis.nvd3-svg").call(xAxis);
+                g.select("scatter").attr("d", resizePath);
+                g.select("g.nv-x.nv-axis.nvd3-svg").transition().duration(duration).call(xAxis);
             }
 
             function updateYAxis() {
@@ -608,7 +576,7 @@ nv.models.multiChart = function() {
                 yAxis2.domain(brush.empty() ? y2.domain() : [yMin2, yMax2]);
 
                 g.select("line").attr("d", resizePath);
-                g.select("scatters").attr("d", resizePath);
+                g.select("scatter").attr("d", resizePath);
                 g.select("g.nv-y1.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis1);
                 g.select("g.nv-y2.nv-axis.nvd3-svg").transition().duration(duration).call(yAxis2);
             }
@@ -813,10 +781,13 @@ nv.models.multiChart = function() {
     chart.lines4 = lines4;
     chart.scatters1 = scatters1;
     chart.scatters2 = scatters2;
+    chart.scatters3 = scatters3;
+    chart.scatters4 = scatters4;
     chart.bars1 = bars1;
     chart.bars2 = bars2;
     chart.stack1 = stack1;
     chart.stack2 = stack2;
+    chart.xAxis2 = xAxis2;
     chart.xAxis = xAxis;
     chart.yAxis1 = yAxis1;
     chart.yAxis2 = yAxis2;
