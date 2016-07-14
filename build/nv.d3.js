@@ -9635,7 +9635,8 @@ nv.models.multiChartWithFocus = function() {
         yMin2,
         yMax2,
         dataInBrushedY1 = [], //yAxis1 brushed data
-        dataInBrushedY2 = []  //yAxis2 brushed data
+        dataInBrushedY2 = [],  //yAxis2 brushed data
+        availableHeight = null
         ;
 
     //============================================================
@@ -9705,12 +9706,20 @@ nv.models.multiChartWithFocus = function() {
                 .x(x2)
                 .on("brush", onBrush);
 
-            chart.update = function() { container.transition().call(chart); };
+            chart.update = function() { 
+                container.transition().call(chart); 
+                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
+                d3.select(wrapper).select('svg:nth-child(3)').remove();
+                d3.select(wrapper).select('svg:nth-child(4)').remove();
+            };
             chart.container = this;
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
-                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
+
+            if (availableHeight === null) {
+                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight;
+            }
 
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
@@ -9780,7 +9789,7 @@ nv.models.multiChartWithFocus = function() {
                             .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
                         ;
 
-            d3.select('svg.nvd3-svg').style({'height':availableHeight + margin.top + margin.bottom})
+            d3.select('svg.nvd3-svg').style({'height': availableHeight + margin.top + margin.bottom});
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
@@ -9805,7 +9814,7 @@ nv.models.multiChartWithFocus = function() {
             context.append('g').attr('class', 'nv-x brush')
               .call(brush)
             .selectAll('rect')
-              .attr('y', -6)
+              .attr('y', -6) 
               .attr('height', availableHeight2 + 7)
               .attr('border', 30)
               .attr('stroke', 'black')
@@ -10052,9 +10061,6 @@ nv.models.multiChartWithFocus = function() {
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
-
-                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
-                d3.select(wrapper).select('svg:nth-child(3)').remove();
             });
 
             if(useInteractiveGuideline){
@@ -12310,8 +12316,8 @@ nv.models.scatter = function() {
                                     var pX = getX(point,pointIndex);
                                     var pY = getY(point,pointIndex);
 
-                                    return [x(pX)+ Math.random() * 1e-4,
-                                            y(pY)+ Math.random() * 1e-4,
+                                    return [x(pX)+ Math.random() * 1e-3,
+                                            y(pY)+ Math.random() * 1e-3,
                                         groupIndex,
                                         pointIndex, point]; //temp hack to add noise until I think of a better way so there are no duplicates
                                 })
