@@ -9633,8 +9633,7 @@ nv.models.multiChartWithFocus = function() {
         yMin2,
         yMax2,
         dataInBrushedY1 = [], //yAxis1 brushed data
-        dataInBrushedY2 = [],  //yAxis2 brushed data
-        availableHeight = null
+        dataInBrushedY2 = []  //yAxis2 brushed data
         ;
 
     //============================================================
@@ -9712,12 +9711,8 @@ nv.models.multiChartWithFocus = function() {
             chart.container = this;
 
             var availableWidth = nv.utils.availableWidth(width, container, margin),
+                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight,
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
-
-            // TODO this is a workaround from the chart decreasing size on each update
-            if (availableHeight === null) {
-                availableHeight = (nv.utils.availableHeight(height, container, margin) - focusHeight);
-            }
 
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
             var dataLines2 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 2});
