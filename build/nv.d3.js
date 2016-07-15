@@ -9611,7 +9611,7 @@ nv.models.multiChartWithFocus = function() {
     // Public Variables with Default Settings
     //------------------------------------------------------------
 
-    var margin = {top: 30, right: 20, bottom: 0, left: 60},
+    var margin = {top: 20, right: 20, bottom: 0, left: 60},
         margin2 = {top: 10, right: 20, bottom: 30, left: 70},    
         color = nv.utils.defaultColor(),
         width = null,
@@ -9795,7 +9795,7 @@ nv.models.multiChartWithFocus = function() {
             gContext
                 .attr('height', availableHeight2)
                 .attr('width', availableWidth)
-                .attr('transform', 'translate(' + margin2.left + ',' + (availableHeight + availableHeight2 + margin.bottom + margin2.bottom+ margin2.top) + ')')
+                .attr('transform', 'translate(' + margin2.left + ',' + (availableHeight + availableHeight2 + margin.bottom + margin2.bottom + margin2.top) + ')')
             ;
 
             gContext.select('g.nv-x.nv-axis')
@@ -9852,7 +9852,7 @@ nv.models.multiChartWithFocus = function() {
 
                 if ( margin.top != legend.height()) {
                     margin.top = legend.height();
-                    availableHeight = nv.utils.availableHeight(height, container, margin);  //NOTE should available height 2 be recalculated here?
+                    availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight;  //NOTE should available height 2 be recalculated here?
                 }
 
                 g.select('.legendWrap')
@@ -10065,14 +10065,12 @@ nv.models.multiChartWithFocus = function() {
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
                     .xScale(x); 
-                wrap.select(".nv-interactive").call(interactiveLayer);
+                g.select(".nv-interactive").call(interactiveLayer);
             }
 
             // Sets a constant value for the original yAxis1 before brush events occur
             y.domain(yAxis1.domain());  
             y2.domain(yAxis2.domain());
-
-            // gEnter.exit().remove();
 
             //============================================================
             // Event Handling/Dispatching
