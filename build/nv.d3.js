@@ -9778,9 +9778,10 @@ nv.models.multiChartWithFocus = function() {
 
             var svg = d3.select(this.parentNode)
                         .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        .attr('width', availableWidth + margin2.left + margin2.right)
-                        .attr('height', availableHeight2 + margin2.top + margin2.bottom)
-                        // .attr('transform', 'translate(' + availableHeight + ',0)')
+                        // .attr('width', availableWidth + margin2.left + margin2.right)
+                        // .attr('height', availableHeight2 + margin2.top + margin2.bottom)
+                        .style({'width': availableWidth + margin2.left + margin2.right})
+                        .style({'height': availableHeight2 + margin2.top + margin2.bottom})
                     ;
 
             var context = svg.append('g')
