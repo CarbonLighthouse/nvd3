@@ -9612,7 +9612,7 @@ nv.models.multiChartWithFocus = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 0, left: 60},
-        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    
+        margin2 = {top: 10, right: 20, bottom: 30, left: 70},    
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -9704,9 +9704,10 @@ nv.models.multiChartWithFocus = function() {
 
             chart.update = function() { 
                 container.transition().call(chart); 
-                var wrapper = d3.select('svg.nvd3-svg')[0][0].parentNode;
-                d3.select(wrapper).select('svg:nth-child(3)').remove();
-                d3.select(wrapper).select('svg:nth-child(4)').remove();
+                var wrapper = d3.select('g.nv-wrap.nvd3.nv-multiChart')[0][0];
+
+                d3.select(wrapper).select('g:nth-child(3)').remove();
+                d3.select(wrapper).select('g:nth-child(4)').remove();
             };
             chart.container = this;
 
@@ -9715,7 +9716,7 @@ nv.models.multiChartWithFocus = function() {
 
             // TODO this is a workaround from the chart decreasing size on each update
             if (availableHeight === null) {
-                availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight;
+                availableHeight = (nv.utils.availableHeight(height, container, margin) - focusHeight);
             }
 
             var dataLines1 = data.filter(function(d) {return d.type == 'line' && d.yAxis == 1});
@@ -9776,63 +9777,63 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var context = d3.select('g.nv-wrap.nvd3.nv-multiChart')
-                            .append('g')
-                            .attr('class', 'nv-context')
-                            .attr('height', availableHeight2)
-                            .attr('width', availableWidth)
-                            .attr('transform', 'translate(' + margin2.left + ',' + (availableHeight + availableHeight2 + margin2.top + margin.bottom) + ')')
-                        ;
+            wrap.exit();
+            
+            var context = wrap.enter().append('g').attr('class', 'context');
 
-            d3.select('svg.nvd3-svg')
-                .attr('height', availableHeight)
-                ;
-
-            context.append('g')
-              .attr('class', 'nv-x nv-axis')
-              .attr('height', availableHeight)
-              .attr('transform', 'translate(0,' + availableHeight2 + ')')
-              .call(xAxis2)
-            ;
-
-            context.append('g').attr('class', 'nv-y3 nv-axis nvd3-svg');
-            context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');
+            context.append('g').attr('class', 'nv-context');
+            context.append('g').attr('class', 'nv-x nv-axis');
             context.append('g').attr('class', 'lines3Wrap');
             context.append('g').attr('class', 'lines4Wrap');
             context.append('g').attr('class', 'scatters3Wrap');
             context.append('g').attr('class', 'scatters4Wrap');
             context.append('g').attr('class', 'nv-brushBackground');
+            context.append('g').attr('class', 'nv-background');
+            context.append('g').attr('class', 'nv-x brush')
+            // context.append('g').attr('class', 'nv-y3 nv-axis nvd3-svg');  //TODO implement y axes for context bar
+            // context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');  //TODO implement y axes for context bar
 
-            context.append('g').attr('class', 'nv-background')
+            wrap.exit();
+
+            var gContext = d3.select('svg.nvd3-svg g.context');
+
+            gContext
+                .attr('height', availableHeight2)
+                .attr('width', availableWidth)
+                .attr('transform', 'translate(' + margin2.left + ',' + (availableHeight + availableHeight2 + margin.bottom + margin2.bottom+ margin2.top) + ')')
+            ;
+
+            gContext.select('g.nv-x.nv-axis')
+                .attr('height', availableHeight)
+                .attr('transform', 'translate(0,' + availableHeight2 + ')')
+            ;
+              
+            gContext.select('g.nv-x.nv-axis')
+                // .attr('transform', 'translate(0,' + )
+                .call(xAxis2)
+            ;
+
+            gContext.select('g.nv-background')
                 .append('rect')
                 .attr('height', availableHeight2)
                 .attr('width', availableWidth)
                 .style({'fill':'white', 'fill-opacity':'0'})
             ;
 
-            context.append('g').attr('class', 'nv-x brush')
+            gContext.select('g.nv-x.brush')
               .call(brush)
             .selectAll('rect')
               .attr('y', -6) 
               .attr('height', availableHeight2 + 7)
-              .attr('border', 30)
               .attr('stroke', 'black')
               .attr('fill', 'none')
             ;
 
-            context.select('path.domain')
+            gContext.select('path.domain')
                 .attr('fill', 'transparent')
                 ;
 
-            var gBrush = g.select('.nv-x.nv-brush').call(brush);
-            gBrush.selectAll('rect')
-                .attr('height', availableHeight2)
-                .attr('width', availableWidth)
-            ;
-
-            gBrush.selectAll('.resize').append('path').attr('d', resizePath).call(lines1);
-
-            g.select('.nv-context .nv-x.nv-axis')
+            gContext.select('.nv-x.nv-axis')
                 .attr('transform', 'translate(0,' + y2.range()[0] + ')'); 
 
             var color_array = data.map(function(d,i) {
@@ -10075,6 +10076,8 @@ nv.models.multiChartWithFocus = function() {
             // Sets a constant value for the original yAxis1 before brush events occur
             y.domain(yAxis1.domain());  
             y2.domain(yAxis2.domain());
+
+            // gEnter.exit().remove();
 
             //============================================================
             // Event Handling/Dispatching
