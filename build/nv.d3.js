@@ -9612,15 +9612,13 @@ nv.models.multiChartWithFocus = function() {
     //------------------------------------------------------------
 
     var margin = {top: 30, right: 20, bottom: 0, left: 60},
-        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    //margin for the context below the graph
+        margin2 = {top: 0, right: 20, bottom: 20, left: 70},    
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
         focusHeight = 50,
         showLegend = true,
         noData = null,
-        yDomain1,
-        yDomain2,
         getX = function(d) { return d.x },
         getY = function(d) { return d.y},
         interpolate = 'monotone',
@@ -9645,8 +9643,6 @@ nv.models.multiChartWithFocus = function() {
 
     var x = d3.scale.linear(),
         x2 = d3.scale.linear(),
-        y3 = nv.models.axis(),
-        y4 = nv.models.axis(),
         yScale1 = d3.scale.linear(),
         yScale2 = d3.scale.linear(),
         yScale3 = d3.scale.linear(),
@@ -9669,12 +9665,12 @@ nv.models.multiChartWithFocus = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
-        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),   // Context xAxis, used to update on brush
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5), 
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
-        yAxis3 = nv.models.axis().scale(yScale3).orient('left'),
-        yAxis4 = nv.models.axis().scale(yScale4).orient('right'),
+        // yAxis3 = nv.models.axis().scale(yScale3).orient('left'),  //TODO implement y axes for context bar
+        // yAxis4 = nv.models.axis().scale(yScale4).orient('right'),  //TODO implement y axes for context bar
 
         legend = nv.models.legend().height(30),
         tooltip = nv.models.tooltip(),
@@ -9683,8 +9679,8 @@ nv.models.multiChartWithFocus = function() {
 
     const y = nv.models.axis();  //holder for initial yaxis1 domain, which will update on brush
     const y2 = nv.models.axis(); //holder for initial yaxis2 domain, which will update on brush
-    yAxis3.domain(yAxis1.domain());
-    yAxis4.domain(yAxis2.domain());
+    // yAxis3.domain(yAxis1.domain());  //TODO implement y axes for context bar
+    // yAxis4.domain(yAxis2.domain());  //TODO implement y axes for context bar
 
     lines3.interactive(false);
     // lines3.pointActive(function(d) { return false; });
@@ -9717,6 +9713,7 @@ nv.models.multiChartWithFocus = function() {
             var availableWidth = nv.utils.availableWidth(width, container, margin),
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
 
+            // TODO this is a workaround from the chart decreasing size on each update
             if (availableHeight === null) {
                 availableHeight = nv.utils.availableHeight(height, container, margin) - focusHeight;
             }
@@ -9729,6 +9726,9 @@ nv.models.multiChartWithFocus = function() {
             var dataBars2 =  data.filter(function(d) {return d.type == 'bar'  && d.yAxis == 2});
             var dataStack1 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 1});
             var dataStack2 = data.filter(function(d) {return d.type == 'area' && d.yAxis == 2});
+
+            if (dataScatters1.length) { scatters3.interactive(false); }
+            if (dataScatters2.length) { scatters4.interactive(false); }
 
             // Display noData message if there's nothing to show.
             if (!data || !data.length || !data.filter(function(d) { return d.values.length }).length) {
@@ -9776,25 +9776,21 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            var svg = d3.select(this.parentNode)
-                        .append('svg') //NOTE appending 'svg' is happening each time we use the legend
-                        // .attr('width', availableWidth + margin2.left + margin2.right)
-                        // .attr('height', availableHeight2 + margin2.top + margin2.bottom)
-                        .style({'width': availableWidth + margin2.left + margin2.right})
-                        .style({'height': availableHeight2 + margin2.top + margin2.bottom})
-                    ;
-
-            var context = svg.append('g')
+            var context = d3.select('g.nv-wrap.nvd3.nv-multiChart')
+                            .append('g')
                             .attr('class', 'nv-context')
                             .attr('height', availableHeight2)
-                            .attr('transform', 'translate(' + margin2.left + ',' + margin2.top + ')')
+                            .attr('width', availableWidth)
+                            .attr('transform', 'translate(' + margin2.left + ',' + (availableHeight + availableHeight2 + margin2.top + margin.bottom) + ')')
                         ;
 
-            d3.select('svg.nvd3-svg').style({'height': availableHeight + margin.top + margin.bottom});
+            d3.select('svg.nvd3-svg')
+                .attr('height', availableHeight)
+                ;
 
             context.append('g')
               .attr('class', 'nv-x nv-axis')
-              .attr('height', availableHeight2)
+              .attr('height', availableHeight)
               .attr('transform', 'translate(0,' + availableHeight2 + ')')
               .call(xAxis2)
             ;
@@ -9806,12 +9802,14 @@ nv.models.multiChartWithFocus = function() {
             context.append('g').attr('class', 'scatters3Wrap');
             context.append('g').attr('class', 'scatters4Wrap');
             context.append('g').attr('class', 'nv-brushBackground');
+
             context.append('g').attr('class', 'nv-background')
                 .append('rect')
                 .attr('height', availableHeight2)
                 .attr('width', availableWidth)
                 .style({'fill':'white', 'fill-opacity':'0'})
             ;
+
             context.append('g').attr('class', 'nv-x brush')
               .call(brush)
             .selectAll('rect')
@@ -9823,7 +9821,8 @@ nv.models.multiChartWithFocus = function() {
             ;
 
             context.select('path.domain')
-                .attr('fill', 'transparent');
+                .attr('fill', 'transparent')
+                ;
 
             var gBrush = g.select('.nv-x.nv-brush').call(brush);
             gBrush.selectAll('rect')
@@ -9832,10 +9831,6 @@ nv.models.multiChartWithFocus = function() {
             ;
 
             gBrush.selectAll('.resize').append('path').attr('d', resizePath).call(lines1);
-
-            g.select('.nv-context g.nv-background rect')
-                .attr('width', availableWidth)
-                .attr('height', availableHeight2);
 
             g.select('.nv-context .nv-x.nv-axis')
                 .attr('transform', 'translate(0,' + y2.range()[0] + ')'); 
@@ -9955,17 +9950,18 @@ nv.models.multiChartWithFocus = function() {
                 return a.map(function(aVal,i){return {x: aVal.x, y: aVal.y + b[i].y}})
             }).concat([{x:0, y:0}]) : [];
 
-            yScale1 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
+            yScale1 .domain(d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
-            yScale2 .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
+            yScale2 .domain(d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
                 .range([0, availableHeight]);
 
-            yScale3 .domain(yDomain1 || d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
-                .range([0, availableHeight]);
+            //TODO implement y axes for context bar
+            // yScale3 .domain(d3.extent(d3.merge(series1).concat(extraValue1), function(d) { return d.y } ))
+            //     .range([0, availableHeight]);
 
-            yScale4  .domain(yDomain2 || d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
-                .range([0, availableHeight]);
+            // yScale4  .domain(d3.extent(d3.merge(series2).concat(extraValue2), function(d) { return d.y } ))
+            //     .range([0, availableHeight]);
 
             lines1.yDomain(yScale1.domain());
             scatters1.yDomain(yScale1.domain());
@@ -9977,11 +9973,11 @@ nv.models.multiChartWithFocus = function() {
             bars2.yDomain(yScale2.domain());
             stack2.yDomain(yScale2.domain());
 
-            lines3.yDomain(yScale3.domain());
-            scatters3.yDomain(yScale3.domain());
+            lines3.yDomain(yScale1.domain());
+            scatters3.yDomain(yScale1.domain());
 
-            lines4.yDomain(yScale4.domain());
-            scatters4.yDomain(yScale4.domain());
+            lines4.yDomain(yScale2.domain());
+            scatters4.yDomain(yScale2.domain());
 
             if(dataStack1.length){d3.transition(stack1Wrap).call(stack1);}
             if(dataStack2.length){d3.transition(stack2Wrap).call(stack2);}
@@ -10030,19 +10026,20 @@ nv.models.multiChartWithFocus = function() {
             d3.transition(g.select('.nv-y2.nv-axis'))
                 .call(yAxis2);
 
-            yAxis3
-                ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
-                .tickSize( -availableWidth, 0);
+            // TODO integrate y axes option for context bar
+            // yAxis3
+            //     ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
+            //     .tickSize( -availableWidth, 0);
             
-            d3.transition(g.select('.nv-y3.nv-axis'))
-                .call(yAxis3);
+            // d3.transition(g.select('.nv-y3.nv-axis'))
+            //     .call(yAxis3);
 
-            yAxis4
-                ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
-                .tickSize( -availableWidth, 0);
+            // yAxis4
+            //     ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
+            //     .tickSize( -availableWidth, 0);
             
-            d3.transition(g.select('.nv-y4.nv-axis'))
-                .call(yAxis4);
+            // d3.transition(g.select('.nv-y4.nv-axis'))
+            //     .call(yAxis4);
 
             g.select('.nv-y1.nv-axis')
                 .classed('nv-disabled', series1.length ? false : true)
@@ -10052,13 +10049,14 @@ nv.models.multiChartWithFocus = function() {
                 .classed('nv-disabled', series2.length ? false : true)
                 .attr('transform', 'translate(' + x.range()[1] + ',0)');
 
-            g.select('.nv-y3.nv-axis')
-                .classed('nv-disabled', series1.length ? false : true)
-                .attr('transform', 'translate(' + x.range()[0] + ',0)');
+            // TODO implement y axes for context bar
+            // g.select('.nv-y3.nv-axis')
+            //     .classed('nv-disabled', series1.length ? false : true)
+            //     .attr('transform', 'translate(' + x.range()[0] + ',0)');
 
-            g.select('.nv-y4.nv-axis')
-                .classed('nv-disabled', series2.length ? false : true)
-                .attr('transform', 'translate(' + x.range()[1] + ',0)');
+            // g.select('.nv-y4.nv-axis')
+            //     .classed('nv-disabled', series2.length ? false : true)
+            //     .attr('transform', 'translate(' + x.range()[1] + ',0)');
 
             legend.dispatch.on('stateChange', function(newState) {
                 chart.update();
@@ -10074,7 +10072,7 @@ nv.models.multiChartWithFocus = function() {
                 wrap.select(".nv-interactive").call(interactiveLayer);
             }
 
-            // sets a constant value for the original yAxis1 before brush events occur
+            // Sets a constant value for the original yAxis1 before brush events occur
             y.domain(yAxis1.domain());  
             y2.domain(yAxis2.domain());
 
@@ -10102,23 +10100,19 @@ nv.models.multiChartWithFocus = function() {
 
                 var extent = brush.empty() ? x2.domain() : brush.extent();
 
-                //The brush extent cannot be less than one.  If it is, don't update the line chart.
-                if (Math.abs(extent[0] - extent[1]) <= 1) {
+                var fivePctDiffOfX = Math.abs((xAxis2.domain()[1] - xAxis2.domain()[0])*.05);
+                var diffOfBrush = Math.abs(extent[1] - extent[0]);
+
+                // Checking to see if the brush is at least 5% of the total chart
+                if (diffOfBrush < fivePctDiffOfX) {
                     brush.extent([0, 0])
                     return;
                 }
 
-                xAxis.domain([extent[0], extent[1]]);
-
-                lines1.xDomain(xAxis.domain());
-                scatters1.xDomain(xAxis.domain());
-                lines2.xDomain(xAxis.domain());
-                scatters2.xDomain(xAxis.domain());
-
                 dataInBrushedY1 = []
                 dataInBrushedY2 = []
 
-                //y values based off brushed x values
+                // y values based off brushed x values
                 data.forEach(function(d, i) { 
                     if (d.yAxis === 1) {
                         d.values.forEach(function(x, y) {
@@ -10140,7 +10134,24 @@ nv.models.multiChartWithFocus = function() {
                 yMin2 = Math.min.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
                 yMax2 = Math.max.apply(null, dataInBrushedY2.map(function(i) { return i.y; }));
 
-                // Update Main (Focus) Axes
+                // If the brush selects no data, show the entire graph
+                if (typeof dataInBrushedY1[0] === "undefined" && typeof dataInBrushedY2[0] === "undefined") {
+                    extent[0] = xAxis2.domain()[0];
+                    extent[1] = xAxis2.domain()[1];
+                    yMin1 = y.domain()[0];
+                    yMax1 = y.domain()[1];
+                    yMin2 = y2.domain()[0];
+                    yMax2 = y2.domain()[1]; 
+                }
+
+                xAxis.domain([extent[0], extent[1]]);
+
+                lines1.xDomain(xAxis.domain());
+                lines2.xDomain(xAxis.domain());
+                scatters1.xDomain(xAxis.domain());
+                scatters2.xDomain(xAxis.domain());
+
+                // Update Chart (Focus) Axes
                 updateXAxis();
                 updateYAxis();
 
@@ -10150,8 +10161,8 @@ nv.models.multiChartWithFocus = function() {
                 scatters2.xScale(xAxis.scale());
 
                 lines1.yDomain(yAxis1.domain());
-                scatters1.yDomain(yAxis1.domain());
                 lines2.yDomain(yAxis2.domain());
+                scatters1.yDomain(yAxis1.domain());
                 scatters2.yDomain(yAxis2.domain());
 
                 lines1.clipEdge(true);
@@ -10160,25 +10171,13 @@ nv.models.multiChartWithFocus = function() {
                 scatters2.clipEdge(true);
 
                 d3.transition(lines1Wrap).call(lines1);
-                d3.transition(scatters1Wrap).call(scatters1);
-
                 d3.transition(lines2Wrap).call(lines2);
+
+                d3.transition(scatters1Wrap).call(scatters1);
                 d3.transition(scatters2Wrap).call(scatters2);
-
-                if(useInteractiveGuideline){
-                    interactiveLayer
-                        .width(availableWidth)
-                        .height(availableHeight)
-                        // .margin({left:margin.left, top:margin.top})
-                        .svgContainer(container)
-                        .xScale(xAxis.scale());
-                    wrap.select(".nv-interactive").call(interactiveLayer);
-                }
-
             }
 
             function updateXAxis() {
-                x.domain(brush.empty() ? x2.domain() : brush.extent());
                 g.select("line").attr("d", resizePath);
                 g.select("scatter").attr("d", resizePath);
                 g.select("g.nv-x.nv-axis.nvd3-svg").transition().duration(duration).call(xAxis);
@@ -10400,12 +10399,12 @@ nv.models.multiChartWithFocus = function() {
     chart.bars2 = bars2;
     chart.stack1 = stack1;
     chart.stack2 = stack2;
-    chart.xAxis2 = xAxis2;
     chart.xAxis = xAxis;
+    chart.xAxis2 = xAxis2;
     chart.yAxis1 = yAxis1;
     chart.yAxis2 = yAxis2;
-    chart.yAxis3 = yAxis3;
-    chart.yAxis4 = yAxis4;
+    // chart.yAxis3 = yAxis3;   //TODO implement y axes for context bar
+    // chart.yAxis4 = yAxis4;   //TODO implement y axes for context bar
     chart.tooltip = tooltip;
     chart.interactiveLayer = interactiveLayer;
 
@@ -10416,8 +10415,6 @@ nv.models.multiChartWithFocus = function() {
         width:      {get: function(){return width;}, set: function(_){width=_;}},
         height:     {get: function(){return height;}, set: function(_){height=_;}},
         showLegend: {get: function(){return showLegend;}, set: function(_){showLegend=_;}},
-        yDomain1:      {get: function(){return yDomain1;}, set: function(_){yDomain1=_;}},
-        yDomain2:    {get: function(){return yDomain2;}, set: function(_){yDomain2=_;}},
         noData:    {get: function(){return noData;}, set: function(_){noData=_;}},
         interpolate:    {get: function(){return interpolate;}, set: function(_){interpolate=_;}},
         legendRightAxisHint:    {get: function(){return legendRightAxisHint;}, set: function(_){legendRightAxisHint=_;}},
@@ -10440,6 +10437,8 @@ nv.models.multiChartWithFocus = function() {
             lines4.x(_);
             scatters1.x(_);
             scatters2.x(_);
+            scatters3.x(_);
+            scatters4.x(_);
             bars1.x(_);
             bars2.x(_);
             stack1.x(_);
@@ -10453,6 +10452,8 @@ nv.models.multiChartWithFocus = function() {
             lines4.y(_);
             scatters1.y(_);
             scatters2.y(_);
+            scatters3.y(_);
+            scatters4.y(_);
             stack1.y(_);
             stack2.y(_);
             bars1.y(_);
@@ -10462,6 +10463,8 @@ nv.models.multiChartWithFocus = function() {
             useVoronoi=_;
             lines1.useVoronoi(_);
             lines2.useVoronoi(_);
+            lines3.useVoronoi(_);
+            lines4.useVoronoi(_);
             stack1.useVoronoi(_);
             stack2.useVoronoi(_);
         }},
@@ -10473,12 +10476,18 @@ nv.models.multiChartWithFocus = function() {
                 lines1.useVoronoi(false);
                 lines2.interactive(false);
                 lines2.useVoronoi(false);
+                lines3.interactive(false);
+                lines3.useVoronoi(false);
+                lines4.interactive(false);
+                lines4.useVoronoi(false);
                 stack1.interactive(false);
                 stack1.useVoronoi(false);
                 stack2.interactive(false);
                 stack2.useVoronoi(false);
                 scatters1.interactive(false);
                 scatters2.interactive(false);
+                scatters3.interactive(false);
+                scatters4.interactive(false);
             }
         }}
     });
