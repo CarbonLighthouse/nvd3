@@ -1550,7 +1550,7 @@ nv.utils.arrayEquals = function (array1, array2) {
     if (!array1 || !array2)
         return false;
 
-    // compare lengths - can save a lot of time 
+    // compare lengths - can save a lot of time
     if (array1.length != array2.length)
         return false;
 
@@ -1692,7 +1692,7 @@ nv.utils.arrayEquals = function (array1, array2) {
                     var rotateLabelsRule = '';
                     if (rotateLabels%360) {
                         //Reset transform on ticks so textHeight can be calculated correctly
-                        xTicks.attr('transform', ''); 
+                        xTicks.attr('transform', '');
                         //Calculate the longest xTick width
                         xTicks.each(function(d,i){
                             var box = this.getBoundingClientRect();
@@ -1900,9 +1900,9 @@ nv.utils.arrayEquals = function (array1, array2) {
                     and the arithmetic trick below solves that.
                     */
                     return !parseFloat(Math.round(d * 100000) / 1000000) && (d !== undefined)
-                }) 
+                })
                 .classed('zero', true);
-            
+
             //store old scales for use in transitions on update
             scale0 = scale.copy();
 
@@ -4236,11 +4236,11 @@ nv.models.discreteBarChart = function() {
                 wrap.select('.nv-legendWrap')
                     .attr('transform', 'translate(0,' + (-margin.top) +')')
             }
-            
+
             if (rightAlignYAxis) {
                 g.select(".nv-y.nv-axis")
                     .attr("transform", "translate(" + availableWidth + ",0)");
-            }	    
+            }
 
             // Main Chart Component(s)
             discretebar
@@ -6390,7 +6390,7 @@ nv.models.lineChart = function() {
     }).headerFormatter(function(d, i) {
         return xAxis.tickFormat()(d, i);
     });
-    
+
     interactiveLayer.tooltip.valueFormatter(function(d, i) {
         return yAxis.tickFormat()(d, i);
     }).headerFormatter(function(d, i) {
@@ -6437,7 +6437,7 @@ nv.models.lineChart = function() {
                 availableHeight1 = nv.utils.availableHeight(height, container, margin) - (focusEnable ? focusHeight : 0),
                 availableHeight2 = focusHeight - margin2.top - margin2.bottom;
 
-            chart.update = function() { 
+            chart.update = function() {
                 if( duration === 0 ) {
                     container.call( chart );
                 } else {
@@ -6547,7 +6547,7 @@ nv.models.lineChart = function() {
             g.select('.nv-focus .nv-background rect')
                 .attr('width', availableWidth)
                 .attr('height', availableHeight1);
-                
+
             lines
                 .width(availableWidth)
                 .height(availableHeight1)
@@ -6598,7 +6598,7 @@ nv.models.lineChart = function() {
                 ;
               }
             }
-            
+
             g.select('.nv-focus .nv-x.nv-axis')
                 .attr('transform', 'translate(0,' + availableHeight1 + ')');
 
@@ -6617,81 +6617,81 @@ nv.models.lineChart = function() {
                     .color(data.map(function(d,i) {
                         return d.color || color(d, i);
                     }).filter(function(d,i) { return !data[i].disabled; }));
-    
+
                 g.select('.nv-context')
                     .attr('transform', 'translate(0,' + ( availableHeight1 + margin.bottom + margin2.top) + ')')
                     .style('display', focusEnable ? 'initial' : 'none')
                 ;
-    
+
                 var contextLinesWrap = g.select('.nv-context .nv-linesWrap')
                     .datum(data.filter(function(d) { return !d.disabled; }))
                     ;
-                    
+
                 d3.transition(contextLinesWrap).call(lines2);
-                
-            
+
+
                 // Setup Brush
                 brush
                     .x(x2)
                     .on('brush', function() {
                         onBrush();
                     });
-    
+
                 if (brushExtent) brush.extent(brushExtent);
-    
+
                 var brushBG = g.select('.nv-brushBackground').selectAll('g')
                     .data([brushExtent || brush.extent()]);
-        
+
                 var brushBGenter = brushBG.enter()
                     .append('g');
-    
+
                 brushBGenter.append('rect')
                     .attr('class', 'left')
                     .attr('x', 0)
                     .attr('y', 0)
                     .attr('height', availableHeight2);
-    
+
                 brushBGenter.append('rect')
                     .attr('class', 'right')
                     .attr('x', 0)
                     .attr('y', 0)
                     .attr('height', availableHeight2);
-    
+
                 var gBrush = g.select('.nv-x.nv-brush')
                     .call(brush);
                 gBrush.selectAll('rect')
                     .attr('height', availableHeight2);
                 gBrush.selectAll('.resize').append('path').attr('d', resizePath);
-    
+
                 onBrush();
-    
+
                 g.select('.nv-context .nv-background rect')
                     .attr('width', availableWidth)
                     .attr('height', availableHeight2);
-    
+
                 // Setup Secondary (Context) Axes
                 if (focusShowAxisX) {
                   x2Axis
                       .scale(x2)
                       ._ticks( nv.utils.calcTicksX(availableWidth/100, data) )
                       .tickSize(-availableHeight2, 0);
-      
+
                   g.select('.nv-context .nv-x.nv-axis')
                       .attr('transform', 'translate(0,' + y2.range()[0] + ')');
                   d3.transition(g.select('.nv-context .nv-x.nv-axis'))
                       .call(x2Axis);
                 }
-    
+
                 if (focusShowAxisY) {
                   y2Axis
                       .scale(y2)
                       ._ticks( nv.utils.calcTicksY(availableHeight2/36, data) )
                       .tickSize( -availableWidth, 0);
-      
+
                   d3.transition(g.select('.nv-context .nv-y.nv-axis'))
                       .call(y2Axis);
                 }
-                
+
                 g.select('.nv-context .nv-x.nv-axis')
                     .attr('transform', 'translate(0,' + y2.range()[0] + ')');
             }
@@ -6807,7 +6807,7 @@ nv.models.lineChart = function() {
             //============================================================
             // Functions
             //------------------------------------------------------------
-    
+
             // Taken from crossfilter (http://square.github.com/crossfilter/)
             function resizePath(d) {
                 var e = +(d == 'e'),
@@ -6823,8 +6823,8 @@ nv.models.lineChart = function() {
                     + 'M' + (4.5 * x) + ',' + (y + 8)
                     + 'V' + (2 * y - 8);
             }
-    
-    
+
+
             function updateBrushBG() {
                 if (!brush.empty()) brush.extent(brushExtent);
                 brushBG
@@ -6834,28 +6834,28 @@ nv.models.lineChart = function() {
                             rightWidth = availableWidth - x2(d[1]);
                         d3.select(this).select('.left')
                             .attr('width',  leftWidth < 0 ? 0 : leftWidth);
-    
+
                         d3.select(this).select('.right')
                             .attr('x', x2(d[1]))
                             .attr('width', rightWidth < 0 ? 0 : rightWidth);
                     });
             }
-    
-    
+
+
             function onBrush() {
                 brushExtent = brush.empty() ? null : brush.extent();
                 var extent = brush.empty() ? x2.domain() : brush.extent();
-    
+
                 //The brush extent cannot be less than one.  If it is, don't update the line chart.
                 if (Math.abs(extent[0] - extent[1]) <= 1) {
                     return;
                 }
-    
+
                 dispatch.brush({extent: extent, brush: brush});
-    
-    
+
+
                 updateBrushBG();
-    
+
                 // Update Main (Focus)
                 var focusLinesWrap = g.select('.nv-focus .nv-linesWrap')
                     .datum(
@@ -6874,8 +6874,8 @@ nv.models.lineChart = function() {
                         })
                 );
                 focusLinesWrap.transition().duration(duration).call(lines);
-    
-    
+
+
                 // Update Main (Focus) Axes
                 updateXAxis();
                 updateYAxis();
@@ -7006,7 +7006,7 @@ nv.models.lineChart = function() {
 
 nv.models.lineWithFocusChart = function() {
   return nv.models.lineChart()
-    .margin({ bottom: 30 }) 
+    .margin({ bottom: 30 })
     .focusEnable( true );
 };nv.models.linePlusBarChart = function() {
     "use strict";
@@ -9913,7 +9913,7 @@ nv.models.multiChartWithFocus = function() {
     //------------------------------------------------------------
 
     var margin = {top: 20, right: 20, bottom: 0, left: 60},
-        margin2 = {top: 10, right: 20, bottom: 30, left: 70},    
+        margin2 = {top: 10, right: 20, bottom: 30, left: 70},
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -9966,7 +9966,7 @@ nv.models.multiChartWithFocus = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
-        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5), 
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
@@ -10005,8 +10005,8 @@ nv.models.multiChartWithFocus = function() {
                     .on("brush", onBrush);
             }
 
-            chart.update = function() { 
-                container.transition().call(chart); 
+            chart.update = function() {
+                container.transition().call(chart);
             };
             // chart.container = this;
 
@@ -10047,7 +10047,7 @@ nv.models.multiChartWithFocus = function() {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-    
+
             x.domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
@@ -10072,8 +10072,8 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            wrap.exit();
-            
+            // wrap.exit();
+
             var context = wrap.enter().append('g').attr('class', 'context');
 
             context.append('g').attr('class', 'nv-context');
@@ -10088,9 +10088,9 @@ nv.models.multiChartWithFocus = function() {
             // context.append('g').attr('class', 'nv-y3 nv-axis nvd3-svg');  //TODO implement y axes for context bar
             // context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');  //TODO implement y axes for context bar
 
-            wrap.exit();
+            // wrap.exit();
 
-            var gContext = d3.select('svg.nvd3-svg g.context');
+            var gContext = context;
 
             gContext
                 .attr('height', availableHeightContext)
@@ -10102,7 +10102,7 @@ nv.models.multiChartWithFocus = function() {
                 .attr('height', availableHeightFocus)
                 .attr('transform', 'translate(0,' + availableHeightContext + ')')
             ;
-              
+
             gContext.select('g.nv-x.nv-axis')
                 // .attr('transform', 'translate(0,' + )
                 .call(xAxis2)
@@ -10118,7 +10118,7 @@ nv.models.multiChartWithFocus = function() {
             gContext.select('g.nv-x.brush')
               .call(brush)
             .selectAll('rect')
-              .attr('y', -10) 
+              .attr('y', -10)
               .attr('height', availableHeightContext + 7)
               .attr('stroke', 'black')
               .attr('fill', 'none')
@@ -10129,7 +10129,7 @@ nv.models.multiChartWithFocus = function() {
                 ;
 
             gContext.select('.nv-x.nv-axis')
-                .attr('transform', 'translate(0,' + (y2.range()[0] + 30) + ')'); 
+                .attr('transform', 'translate(0,' + (y2.range()[0] + 30) + ')');
 
             var color_array = data.map(function(d,i) {
                 return data[i].color || color(d, i);
@@ -10152,7 +10152,7 @@ nv.models.multiChartWithFocus = function() {
 
                 if ( margin.top != legend.height()) {
                     margin.top = legend.height();
-                    availableHeightFocus = nv.utils.availableHeight(height, container, margin) - contextHeight;  //NOTE should available height 2 be recalculated here?
+                    availableHeightFocus = nv.utils.availableHeight(height, container, margin) - contextHeight;
                 }
 
                 g.select('.legendWrap')
@@ -10229,13 +10229,13 @@ nv.models.multiChartWithFocus = function() {
                 .datum(dataBars2.filter(function(d){return !d.disabled}));
             var stack2Wrap = g.select('.stack2Wrap')
                 .datum(dataStack2.filter(function(d){return !d.disabled}));
-            var lines3Wrap = d3.select('.lines3Wrap')
+            var lines3Wrap = context.select('.lines3Wrap')
                 .datum(dataLines1.filter(function(d){return !d.disabled}));
-            var scatters3Wrap = d3.select('.scatters3Wrap')
+            var scatters3Wrap = context.select('.scatters3Wrap')
                 .datum(dataScatters1.filter(function(d){return !d.disabled}));
-            var lines4Wrap = d3.select('.lines4Wrap')
+            var lines4Wrap = context.select('.lines4Wrap')
                 .datum(dataLines2.filter(function(d){return !d.disabled}));
-            var scatters4Wrap = d3.select('.scatters4Wrap')
+            var scatters4Wrap = context.select('.scatters4Wrap')
                 .datum(dataScatters2.filter(function(d){return !d.disabled}));
 
 
@@ -10293,7 +10293,7 @@ nv.models.multiChartWithFocus = function() {
             if(dataBars2.length){
                 d3.transition(bars2Wrap).call(bars2);
                 // d3.transition(bars4Wrap).call(bars4);
-        }
+            }
 
             if(dataLines1.length){
                 d3.transition(lines1Wrap).call(lines1);
@@ -10340,14 +10340,14 @@ nv.models.multiChartWithFocus = function() {
             // yAxis3
             //     ._ticks( nv.utils.calcTicksY(availableHeightFocusContext/36, data) )
             //     .tickSize( -availableWidth, 0);
-            
+
             // d3.transition(g.select('.nv-y3.nv-axis'))
             //     .call(yAxis3);
 
             // yAxis4
             //     ._ticks( nv.utils.calcTicksY(availableHeightFocusContext/36, data) )
             //     .tickSize( -availableWidth, 0);
-            
+
             // d3.transition(g.select('.nv-y4.nv-axis'))
             //     .call(yAxis4);
 
@@ -10378,12 +10378,12 @@ nv.models.multiChartWithFocus = function() {
                     .height(availableHeightFocus)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x); 
+                    .xScale(x);
                 g.select(".nv-interactive").call(interactiveLayer);
             }
 
             // Sets a constant value for the original yAxis1 before brush events occur
-            y.domain(yAxis1.domain());  
+            y.domain(yAxis1.domain());
             y2.domain(yAxis2.domain());
 
             //============================================================
@@ -10425,7 +10425,7 @@ nv.models.multiChartWithFocus = function() {
                 y2max = undefined;
 
                 // y values based off brushed x values
-                data.forEach(function(d) { 
+                data.forEach(function(d) {
                     if (d.yAxis === 1) {
                         d.values.forEach(function(value) {
                             if (value.x >= extent[0] && value.x <= extent[1]) {
@@ -10446,7 +10446,7 @@ nv.models.multiChartWithFocus = function() {
                                 if (typeof y2min == 'undefined' || value.y < y2min) {
                                     y2min = value.y;
                                 }
-                            }  
+                            }
                         })
                     }
                 });
@@ -10494,11 +10494,12 @@ nv.models.multiChartWithFocus = function() {
                     g.select(".nv-interactive").call(interactiveLayer);
                 }
 
-                d3.select('.lines1Wrap').transition(lines1Wrap).call(lines1);
-                d3.select('.lines2Wrap').transition(lines2Wrap).call(lines2);
+                context.select('.lines1Wrap').transition(lines1Wrap).call(lines1);
+                context.select('.lines2Wrap').transition(lines2Wrap).call(lines2);
 
-                d3.select('.scatters1Wrap').transition(scatters1Wrap).call(scatters1);
-                d3.select('.scatters2Wrap').transition(scatters2Wrap).call(scatters2);
+                context.select('.scatters1Wrap').transition(scatters1Wrap).call(scatters1);
+                context.select('.scatters2Wrap').transition(scatters2Wrap).call(scatters2);
+
             }
 
             function updateXAxis() {
@@ -10604,6 +10605,9 @@ nv.models.multiChartWithFocus = function() {
                 interactiveLayer.dispatch.on('elementMousemove', function(e) {
                     clearHighlights();
                     var singlePoint, pointIndex, pointXLocation, allData = [];
+
+                    // console.dir(chart); //TODO
+
                     data
                     .filter(function(series, i) {
                         series.seriesIndex = i;
@@ -11114,10 +11118,10 @@ nv.models.parallelCoordinates = function() {
             if (active.length === 0) {
                 active = data;
             }; //set all active before first brush call
-            
+
             dimensionNames = dimensionData.sort(function (a, b) { return a.currentPosition - b.currentPosition; }).map(function (d) { return d.key });
             enabledDimensions = dimensionData.filter(function (d) { return !d.disabled; });
-            
+
             // Setup Scales
             x.rangePoints([0, availableWidth], 1).domain(enabledDimensions.map(function (d) { return d.key; }));
 
@@ -11126,7 +11130,7 @@ nv.models.parallelCoordinates = function() {
             var oldDomainMaxValue = {};
             var displayMissingValuesline = false;
             var currentTicks = [];
-            
+
             dimensionNames.forEach(function(d) {
                 var extent = d3.extent(dataValues, function (p) { return +p[d]; });
                 var min = extent[0];
@@ -11203,7 +11207,7 @@ nv.models.parallelCoordinates = function() {
                         .attr("y1", function(d) { return d[1]; })
                         .attr("x2", function(d) { return d[2]; })
                         .attr("y2", function(d) { return d[3]; });
-    
+
                 //Add the text "undefined values" under the missing value line
                 missingValueslineText = wrap.select('.missingValuesline').selectAll('text').data([undefinedValuesLabel]);
                 missingValueslineText.append('text').data([undefinedValuesLabel]);
@@ -11269,7 +11273,7 @@ nv.models.parallelCoordinates = function() {
                 .on("mouseover", function(d, i) {
                     dispatch.elementMouseover({
                         label: d.tooltip || d.key,
-                        color: d.color 
+                        color: d.color
                     });
                 })
                 .on("mouseout", function(d, i) {
@@ -11360,7 +11364,7 @@ nv.models.parallelCoordinates = function() {
                     if (visible)
                         y[f.dimension].brush.extent(f.extent);
                 });
-                
+
                 dimensions.select('.nv-brushBackground')
                     .each(function (d) {
                         d3.select(this).call(y[d.key].brush);
@@ -11369,10 +11373,10 @@ nv.models.parallelCoordinates = function() {
                     .selectAll('rect')
                     .attr('x', -8)
                     .attr('width', 16);
-                
+
                 updateTicks();
             }
-            
+
             // Handles a brush event, toggling the display of foreground lines.
             function brushstart() {
                 //If brush aren't visible, show it before brushing again.
@@ -11381,7 +11385,7 @@ nv.models.parallelCoordinates = function() {
                     restoreBrush(true);
                 }
             }
-            
+
             // Handles a brush event, toggling the display of foreground lines.
             function brush() {
                 actives = dimensionNames.filter(function (p) { return !y[p].brush.empty(); });
@@ -11406,9 +11410,9 @@ nv.models.parallelCoordinates = function() {
                     if (isActive) active.push(d);
                     return isActive ? null : 'none';
                 });
-                
+
                 updateTicks();
-                
+
                 dispatch.brush({
                     filters: filters,
                     active: active
@@ -11423,23 +11427,23 @@ nv.models.parallelCoordinates = function() {
                         f.hasOnlyNaN = true;
                 });
                 dispatch.brushEnd(active, hasActiveBrush);
-            }           
+            }
             function updateTicks() {
                 dimensions.select('.nv-axis')
                     .each(function (d, i) {
                         var f = filters.filter(function (k) { return k.dimension == d.key; });
                         currentTicks[d.key] = y[d.key].domain();
-                        
+
                         //If brush are available, display brush extent
                         if (f.length != 0 && displayBrush)
                         {
                             currentTicks[d.key] = [];
-                            if (f[0].extent[1] > y[d.key].domain()[0]) 
+                            if (f[0].extent[1] > y[d.key].domain()[0])
                                 currentTicks[d.key] = [f[0].extent[1]];
                             if (f[0].extent[0] >= y[d.key].domain()[0])
-                                currentTicks[d.key].push(f[0].extent[0]);    
+                                currentTicks[d.key].push(f[0].extent[0]);
                         }
-                            
+
                         d3.select(this).call(axis.scale(y[d.key]).tickFormat(d.format).tickValues(currentTicks[d.key]));
                 });
             }
@@ -11492,7 +11496,7 @@ nv.models.parallelCoordinates = function() {
         active: { get: function () { return active; }, set: function (_) { active = _; } },
         lineTension:   {get: function(){return lineTension;},     set: function(_){lineTension = _;}},
         undefinedValuesLabel : {get: function(){return undefinedValuesLabel;}, set: function(_){undefinedValuesLabel=_;}},
-        
+
         // deprecated options
         dimensions: {get: function () { return dimensionData.map(function (d){return d.key}); }, set: function (_) {
             // deprecated after 1.8.1
@@ -11512,7 +11516,7 @@ nv.models.parallelCoordinates = function() {
             } else {
                 _.forEach(function (k, i) { dimensionData[i].key = k })
             }
- 
+
         }},
         dimensionFormats: {get: function () { return dimensionData.map(function (d) { return d.format }); }, set: function (_) {
             // deprecated after 1.8.1
@@ -11565,7 +11569,7 @@ nv.models.parallelCoordinatesChart = function () {
         ;
 
 	    //============================================================
-	
+
 		//============================================================
         // Private Variables
         //------------------------------------------------------------
@@ -11592,18 +11596,18 @@ nv.models.parallelCoordinatesChart = function () {
 
         tooltip.contentGenerator(function(data) {
             var str = '<table><thead><tr><td class="legend-color-guide"><div style="background-color:' + data.color + '"></div></td><td><strong>' + data.key + '</strong></td></tr></thead>';
-            if(data.series.length !== 0) 
+            if(data.series.length !== 0)
             {
                 str = str + '<tbody><tr><td height ="10px"></td></tr>';
                 data.series.forEach(function(d){
                     str = str + '<tr><td class="legend-color-guide"><div style="background-color:' + d.color + '"></div></td><td class="key">' + d.key + '</td><td class="value">' + d.value + '</td></tr>';
-                }); 
+                });
                 str = str + '</tbody>';
             }
             str = str + '</table>';
             return str;
         });
-        
+
         //============================================================
         // Chart function
         //------------------------------------------------------------
@@ -11656,7 +11660,7 @@ nv.models.parallelCoordinatesChart = function () {
                 } else {
                     container.selectAll('.nv-noData').remove();
                 }
-                
+
                 //------------------------------------------------------------
                 // Setup containers and skeleton of chart
 
@@ -11664,7 +11668,7 @@ nv.models.parallelCoordinatesChart = function () {
                 var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-parallelCoordinatesChart').append('g');
 
                 var g = wrap.select('g');
-                
+
                 gEnter.append('g').attr('class', 'nv-parallelCoordinatesWrap');
                 gEnter.append('g').attr('class', 'nv-legendWrap');
 
@@ -11698,12 +11702,12 @@ nv.models.parallelCoordinatesChart = function () {
                     .height(availableHeight)
                     .dimensionData(dimensionData)
                     .displayBrush(displayBrush);
-		
+
 		        var parallelCoordinatesWrap = g.select('.nv-parallelCoordinatesWrap ')
                   .datum(data);
 
 		        parallelCoordinatesWrap.transition().call(parallelCoordinates);
-		  
+
 				//============================================================
                 // Event Handling/Dispatching (in chart's scope)
                 //------------------------------------------------------------
@@ -11764,7 +11768,7 @@ nv.models.parallelCoordinatesChart = function () {
                 key: evt.label,
                 color: evt.color,
                 series: []
-             }      
+             }
             if(evt.values){
                 Object.keys(evt.values).forEach(function (d) {
                     var dim = evt.dimensions.filter(function (dd) {return dd.key === d;})[0];
@@ -11793,7 +11797,7 @@ nv.models.parallelCoordinatesChart = function () {
 		 //============================================================
         // Expose Public Variables
         //------------------------------------------------------------
-		
+
 		// expose chart's sub-components
         chart.dispatch = dispatch;
         chart.parallelCoordinates = parallelCoordinates;
@@ -11811,7 +11815,7 @@ nv.models.parallelCoordinatesChart = function () {
             displayBrush: { get: function () { return displayBrush; }, set: function (_) { displayBrush = _; } },
             noData: { get: function () { return noData; }, set: function (_) { noData = _; } },
             nanValue: { get: function () { return nanValue; }, set: function (_) { nanValue = _; } },
-            
+
             // options that require extra logic in the setter
             margin: {
                 get: function () { return margin; },
@@ -12545,7 +12549,7 @@ nv.models.scatter = function() {
         , useVoronoi   = true
         , duration     = 250
         , interactiveUpdateDelay = 300
-        , showLabels    = false 
+        , showLabels    = false
         ;
 
 
@@ -12603,7 +12607,7 @@ nv.models.scatter = function() {
             });
 
             // Setup Scales
-            var logScale = chart.yScale().name === d3.scale.log().name ? true : false; 
+            var logScale = chart.yScale().name === d3.scale.log().name ? true : false;
             // remap and flatten the data for use in calculating the scales' domains
             var seriesData = (xDomain && yDomain && sizeDomain) ? [] : // if we know xDomain and yDomain and sizeDomain, no need to calculate.... if Size is constant remember to set sizeDomain to speed up performance
                 d3.merge(
@@ -12961,10 +12965,10 @@ nv.models.scatter = function() {
                     .type(function(d) { return getShape(d[0]); })
                     .size(function(d) { return z(getSize(d[0],d[1])) })
             );
-            
-            // add label a label to scatter chart 
+
+            // add label a label to scatter chart
             if(showLabels)
-            {      
+            {
                 var titles =  groups.selectAll('.nv-label')
                     .data(function(d) {
                         return d.values.map(
@@ -12977,7 +12981,7 @@ nv.models.scatter = function() {
                         });
 
                 titles.enter().append('text')
-                    .style('fill', function (d,i) { 
+                    .style('fill', function (d,i) {
                         return d.color })
                     .style('stroke-opacity', 0)
                     .style('fill-opacity', 1)
@@ -13544,7 +13548,7 @@ nv.models.sparkline = function() {
     //------------------------------------------------------------
 
     var renderWatch = nv.utils.renderWatch(dispatch);
-    
+
     function chart(selection) {
         renderWatch.reset();
         selection.each(function(data) {
@@ -13609,7 +13613,7 @@ nv.models.sparkline = function() {
                             getY(d, d.pointIndex) == y.domain()[0] ? 'nv-point nv-minValue' : 'nv-point nv-maxValue'
                 });
         });
-        
+
         renderWatch.renderEnd('sparkline immediate');
         return chart;
     }
@@ -13679,7 +13683,7 @@ nv.models.sparklinePlus = function() {
         , noData = null
         , dispatch = d3.dispatch('renderEnd')
         ;
-        
+
     //============================================================
     // Private Variables
     //------------------------------------------------------------
@@ -13973,13 +13977,13 @@ nv.models.stackedArea = function() {
             gEnter.append('g').attr('class', 'nv-scatterWrap');
 
             wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
-            
+
             // If the user has not specified forceY, make sure 0 is included in the domain
             // Otherwise, use user-specified values for forceY
             if (scatter.forceY().length == 0) {
                 scatter.forceY().push(0);
             }
-            
+
             scatter
                 .width(availableWidth)
                 .height(availableHeight)
