@@ -10606,8 +10606,6 @@ nv.models.multiChartWithFocus = function() {
                     clearHighlights();
                     var singlePoint, pointIndex, pointXLocation, allData = [];
 
-                    // console.dir(chart); //TODO
-
                     data
                     .filter(function(series, i) {
                         series.seriesIndex = i;

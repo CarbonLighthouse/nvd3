@@ -26,6 +26,12 @@
             height: 400px;
             width: 100%;
         }
+        html, body, #chart3, svg {
+            margin: 0px;
+            padding: 0px;
+            height: 400px;
+            width: 100%;
+        }
     </style>
 </head>
 <body class='with-3d-shadow with-transitions'>
@@ -35,6 +41,10 @@
 </div>
 
 <div id="chart2" >
+    <svg> </svg>
+</div>
+
+<div id="chart3" >
     <svg> </svg>
 </div>
 
@@ -126,6 +136,50 @@
 
         return chart2;
     });
+
+    var testdata3 = stream_layers(4,10+Math.random()*100,.1).map(function(data, i) {
+        return {
+            key: 'Stream' + i,
+            values: data.map(function(a){a.y = a.y * (i <= 1 ? -1 : 1); return a})
+        };
+    });
+
+    testdata3[0].type = "line";
+    testdata3[0].yAxis = 1;
+    testdata3[1].type = "line";
+    testdata3[1].yAxis = 2;
+    testdata3[2].type = "scatter";
+    testdata3[2].yAxis = 1;
+    testdata3[3].type = "scatter";
+    testdata3[3].yAxis = 2;
+    // testdata[4].type = "area";
+    // testdata[4].yAxis = 1;
+    // testdata[5].type = "area";
+    // testdata[5].yAxis = 2;
+    // testdata[6].type = "bar";
+    // testdata[6].yAxis = 2;
+    // testdata[7].type = "bar";
+    // testdata[7].yAxis = 2;
+    // testdata[8].type = "bar";
+    // testdata[8].yAxis = 2;
+
+    nv.addGraph(function() {
+        var chart3 = nv.models.multiChartWithFocus()
+            .margin({top: 30, right: 60, bottom: 50, left: 70})
+            .useInteractiveGuideline(true)
+            .color(d3.scale.category10().range());
+
+        chart3.xAxis.tickFormat(d3.format(',f'));
+        chart3.yAxis1.tickFormat(d3.format(',.1f'));
+        chart3.yAxis2.tickFormat(d3.format(',.1f'));
+
+        d3.select('#chart3 svg')
+            .datum(testdata3)
+            .transition().duration(500).call(chart3);
+
+        return chart3;
+    });
+
 
 </script>
 </body>
