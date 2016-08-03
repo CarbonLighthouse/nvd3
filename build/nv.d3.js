@@ -10229,13 +10229,13 @@ nv.models.multiChartWithFocus = function() {
                 .datum(dataBars2.filter(function(d){return !d.disabled}));
             var stack2Wrap = g.select('.stack2Wrap')
                 .datum(dataStack2.filter(function(d){return !d.disabled}));
-            var lines3Wrap = context.select('.lines3Wrap')
+            var lines3Wrap = gContext.select('.lines3Wrap')
                 .datum(dataLines1.filter(function(d){return !d.disabled}));
-            var scatters3Wrap = context.select('.scatters3Wrap')
+            var scatters3Wrap = gContext.select('.scatters3Wrap')
                 .datum(dataScatters1.filter(function(d){return !d.disabled}));
-            var lines4Wrap = context.select('.lines4Wrap')
+            var lines4Wrap = gContext.select('.lines4Wrap')
                 .datum(dataLines2.filter(function(d){return !d.disabled}));
-            var scatters4Wrap = context.select('.scatters4Wrap')
+            var scatters4Wrap = gContext.select('.scatters4Wrap')
                 .datum(dataScatters2.filter(function(d){return !d.disabled}));
 
 
@@ -10494,11 +10494,11 @@ nv.models.multiChartWithFocus = function() {
                     g.select(".nv-interactive").call(interactiveLayer);
                 }
 
-                context.select('.lines1Wrap').transition(lines1Wrap).call(lines1);
-                context.select('.lines2Wrap').transition(lines2Wrap).call(lines2);
+                lines1Wrap.transition().call(lines1);
+                lines2Wrap.transition().call(lines2);
 
-                context.select('.scatters1Wrap').transition(scatters1Wrap).call(scatters1);
-                context.select('.scatters2Wrap').transition(scatters2Wrap).call(scatters2);
+                scatters1Wrap.transition().call(scatters1);
+                scatters2Wrap.transition().call(scatters2);
 
             }
 
