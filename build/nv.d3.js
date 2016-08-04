@@ -10427,6 +10427,8 @@ nv.models.multiChartWithFocus = function() {
                 // y values based off brushed x values
                 data.forEach(function(d) {
                     if (d.yAxis === 1) {
+                        d.disabled = false;
+                        var xInExtentY1 = 0;
                         d.values.forEach(function(value) {
                             if (value.x >= extent[0] && value.x <= extent[1]) {
                                 if (typeof y1max == 'undefined' || value.y > y1max) {
@@ -10435,9 +10437,16 @@ nv.models.multiChartWithFocus = function() {
                                 if (typeof y1min == 'undefined' || value.y < y1min) {
                                     y1min = value.y;
                                 }
+                            } else {
+                                xInExtentY1++;
+                            }
+                            if (xInExtentY1 == d.values.length) {
+                                d.disabled = true;
                             }
                         })
                     } else if (d.yAxis === 2) {
+                        d.disabled = false;
+                        var xInExtentY2 = 0;
                         d.values.forEach(function(value) {
                             if (value.x >= extent[0] && value.x <= extent[1]) {
                                 if (typeof y2max == 'undefined' || value.y > y2max) {
@@ -10446,10 +10455,16 @@ nv.models.multiChartWithFocus = function() {
                                 if (typeof y2min == 'undefined' || value.y < y2min) {
                                     y2min = value.y;
                                 }
+                            } else {
+                                xInExtentY2++;
+                            }
+                            if (xInExtentY2 == d.values.length) {
+                                d.disabled = true;
                             }
                         })
                     }
                 });
+
 
                 // If the brush selects no data, show the entire graph
                 if (brush.extent() == [0,0]) {

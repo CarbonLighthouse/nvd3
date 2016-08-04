@@ -32,6 +32,12 @@
             height: 400px;
             width: 100%;
         }
+        html, body, #chart2, svg {
+            margin: 0px;
+            padding: 0px;
+            height: 1000px;
+            width: 100%;
+        }
     </style>
 </head>
 <body class='with-3d-shadow with-transitions'>
@@ -109,6 +115,14 @@
     testdata2[2].yAxis = 1;
     testdata2[3].type = "scatter";
     testdata2[3].yAxis = 2;
+    testdata[0].type = "line";
+    testdata[0].yAxis = 1;
+    testdata[1].type = "line";
+    testdata[1].yAxis = 2;
+    testdata[2].type = "scatter";
+    testdata[2].yAxis = 1;
+    testdata[3].type = "scatter";
+    testdata[3].yAxis = 2;
     // testdata[4].type = "area";
     // testdata[4].yAxis = 1;
     // testdata[5].type = "area";

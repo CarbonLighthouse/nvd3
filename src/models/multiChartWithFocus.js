@@ -7,7 +7,7 @@ nv.models.multiChartWithFocus = function() {
     //------------------------------------------------------------
 
     var margin = {top: 20, right: 20, bottom: 0, left: 60},
-        margin2 = {top: 10, right: 20, bottom: 30, left: 70},    
+        margin2 = {top: 10, right: 20, bottom: 30, left: 70},
         color = nv.utils.defaultColor(),
         width = null,
         height = null,
@@ -60,7 +60,7 @@ nv.models.multiChartWithFocus = function() {
         stack2 = nv.models.stackedArea().yScale(yScale2),
 
         xAxis = nv.models.axis().scale(x).orient('bottom').tickPadding(5),
-        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5), 
+        xAxis2 = nv.models.axis().scale(x2).orient('bottom').tickPadding(5),
         yAxis1 = nv.models.axis().scale(yScale1).orient('left'),
         yAxis2 = nv.models.axis().scale(yScale2).orient('right'),
 
@@ -99,8 +99,8 @@ nv.models.multiChartWithFocus = function() {
                     .on("brush", onBrush);
             }
 
-            chart.update = function() { 
-                container.transition().call(chart); 
+            chart.update = function() {
+                container.transition().call(chart);
             };
             // chart.container = this;
 
@@ -141,7 +141,7 @@ nv.models.multiChartWithFocus = function() {
                         return { x: getX(d), y: getY(d) }
                     })
                 });
-    
+
             x.domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return getX(d) }))
                 .range([0, availableWidth]);
 
@@ -166,8 +166,8 @@ nv.models.multiChartWithFocus = function() {
             gEnter.append('g').attr('class', 'legendWrap');
             gEnter.append('g').attr('class', 'nv-interactive');
 
-            wrap.exit();
-            
+            // wrap.exit();
+
             var context = wrap.enter().append('g').attr('class', 'context');
 
             context.append('g').attr('class', 'nv-context');
@@ -182,9 +182,9 @@ nv.models.multiChartWithFocus = function() {
             // context.append('g').attr('class', 'nv-y3 nv-axis nvd3-svg');  //TODO implement y axes for context bar
             // context.append('g').attr('class', 'nv-y4 nv-axis nvd3-svg');  //TODO implement y axes for context bar
 
-            wrap.exit();
+            // wrap.exit();
 
-            var gContext = d3.select('svg.nvd3-svg g.context');
+            var gContext = context;
 
             gContext
                 .attr('height', availableHeightContext)
@@ -196,7 +196,7 @@ nv.models.multiChartWithFocus = function() {
                 .attr('height', availableHeightFocus)
                 .attr('transform', 'translate(0,' + availableHeightContext + ')')
             ;
-              
+
             gContext.select('g.nv-x.nv-axis')
                 // .attr('transform', 'translate(0,' + )
                 .call(xAxis2)
@@ -212,7 +212,7 @@ nv.models.multiChartWithFocus = function() {
             gContext.select('g.nv-x.brush')
               .call(brush)
             .selectAll('rect')
-              .attr('y', -10) 
+              .attr('y', -10)
               .attr('height', availableHeightContext + 7)
               .attr('stroke', 'black')
               .attr('fill', 'none')
@@ -223,7 +223,7 @@ nv.models.multiChartWithFocus = function() {
                 ;
 
             gContext.select('.nv-x.nv-axis')
-                .attr('transform', 'translate(0,' + (y2.range()[0] + 30) + ')'); 
+                .attr('transform', 'translate(0,' + (y2.range()[0] + 30) + ')');
 
             var color_array = data.map(function(d,i) {
                 return data[i].color || color(d, i);
@@ -246,7 +246,7 @@ nv.models.multiChartWithFocus = function() {
 
                 if ( margin.top != legend.height()) {
                     margin.top = legend.height();
-                    availableHeightFocus = nv.utils.availableHeight(height, container, margin) - contextHeight;  //NOTE should available height 2 be recalculated here?
+                    availableHeightFocus = nv.utils.availableHeight(height, container, margin) - contextHeight;
                 }
 
                 g.select('.legendWrap')
@@ -323,13 +323,13 @@ nv.models.multiChartWithFocus = function() {
                 .datum(dataBars2.filter(function(d){return !d.disabled}));
             var stack2Wrap = g.select('.stack2Wrap')
                 .datum(dataStack2.filter(function(d){return !d.disabled}));
-            var lines3Wrap = d3.select('.lines3Wrap')
+            var lines3Wrap = gContext.select('.lines3Wrap')
                 .datum(dataLines1.filter(function(d){return !d.disabled}));
-            var scatters3Wrap = d3.select('.scatters3Wrap')
+            var scatters3Wrap = gContext.select('.scatters3Wrap')
                 .datum(dataScatters1.filter(function(d){return !d.disabled}));
-            var lines4Wrap = d3.select('.lines4Wrap')
+            var lines4Wrap = gContext.select('.lines4Wrap')
                 .datum(dataLines2.filter(function(d){return !d.disabled}));
-            var scatters4Wrap = d3.select('.scatters4Wrap')
+            var scatters4Wrap = gContext.select('.scatters4Wrap')
                 .datum(dataScatters2.filter(function(d){return !d.disabled}));
 
 
@@ -387,7 +387,7 @@ nv.models.multiChartWithFocus = function() {
             if(dataBars2.length){
                 d3.transition(bars2Wrap).call(bars2);
                 // d3.transition(bars4Wrap).call(bars4);
-        }
+            }
 
             if(dataLines1.length){
                 d3.transition(lines1Wrap).call(lines1);
@@ -434,14 +434,14 @@ nv.models.multiChartWithFocus = function() {
             // yAxis3
             //     ._ticks( nv.utils.calcTicksY(availableHeightFocusContext/36, data) )
             //     .tickSize( -availableWidth, 0);
-            
+
             // d3.transition(g.select('.nv-y3.nv-axis'))
             //     .call(yAxis3);
 
             // yAxis4
             //     ._ticks( nv.utils.calcTicksY(availableHeightFocusContext/36, data) )
             //     .tickSize( -availableWidth, 0);
-            
+
             // d3.transition(g.select('.nv-y4.nv-axis'))
             //     .call(yAxis4);
 
@@ -472,12 +472,12 @@ nv.models.multiChartWithFocus = function() {
                     .height(availableHeightFocus)
                     .margin({left:margin.left, top:margin.top})
                     .svgContainer(container)
-                    .xScale(x); 
+                    .xScale(x);
                 g.select(".nv-interactive").call(interactiveLayer);
             }
 
             // Sets a constant value for the original yAxis1 before brush events occur
-            y.domain(yAxis1.domain());  
+            y.domain(yAxis1.domain());
             y2.domain(yAxis2.domain());
 
             //============================================================
@@ -519,8 +519,10 @@ nv.models.multiChartWithFocus = function() {
                 y2max = undefined;
 
                 // y values based off brushed x values
-                data.forEach(function(d) { 
+                data.forEach(function(d) {
                     if (d.yAxis === 1) {
+                        d.disabled = false;
+                        var xInExtentY1 = 0;
                         d.values.forEach(function(value) {
                             if (value.x >= extent[0] && value.x <= extent[1]) {
                                 if (typeof y1max == 'undefined' || value.y > y1max) {
@@ -529,9 +531,16 @@ nv.models.multiChartWithFocus = function() {
                                 if (typeof y1min == 'undefined' || value.y < y1min) {
                                     y1min = value.y;
                                 }
+                            } else {
+                                xInExtentY1++;
+                            }
+                            if (xInExtentY1 == d.values.length) {
+                                d.disabled = true;
                             }
                         })
                     } else if (d.yAxis === 2) {
+                        d.disabled = false;
+                        var xInExtentY2 = 0;
                         d.values.forEach(function(value) {
                             if (value.x >= extent[0] && value.x <= extent[1]) {
                                 if (typeof y2max == 'undefined' || value.y > y2max) {
@@ -540,10 +549,16 @@ nv.models.multiChartWithFocus = function() {
                                 if (typeof y2min == 'undefined' || value.y < y2min) {
                                     y2min = value.y;
                                 }
-                            }  
+                            } else {
+                                xInExtentY2++;
+                            }
+                            if (xInExtentY2 == d.values.length) {
+                                d.disabled = true;
+                            }
                         })
                     }
                 });
+
 
                 // If the brush selects no data, show the entire graph
                 if (brush.extent() == [0,0]) {
@@ -588,11 +603,12 @@ nv.models.multiChartWithFocus = function() {
                     g.select(".nv-interactive").call(interactiveLayer);
                 }
 
-                d3.select('.lines1Wrap').transition(lines1Wrap).call(lines1);
-                d3.select('.lines2Wrap').transition(lines2Wrap).call(lines2);
+                lines1Wrap.transition().call(lines1);
+                lines2Wrap.transition().call(lines2);
 
-                d3.select('.scatters1Wrap').transition(scatters1Wrap).call(scatters1);
-                d3.select('.scatters2Wrap').transition(scatters2Wrap).call(scatters2);
+                scatters1Wrap.transition().call(scatters1);
+                scatters2Wrap.transition().call(scatters2);
+
             }
 
             function updateXAxis() {
@@ -698,6 +714,7 @@ nv.models.multiChartWithFocus = function() {
                 interactiveLayer.dispatch.on('elementMousemove', function(e) {
                     clearHighlights();
                     var singlePoint, pointIndex, pointXLocation, allData = [];
+
                     data
                     .filter(function(series, i) {
                         series.seriesIndex = i;
